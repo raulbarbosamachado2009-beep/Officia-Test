@@ -30,12 +30,13 @@ import { ModuleId, AIModel } from './types';
 import { AI_MODELS } from './data/mockData';
 
 export function App() {
+  // Initial page opens on universal coordinator AI chat as requested
   const [activeModule, setActiveModule] = useState<ModuleId>('chat');
   const [selectedModel, setSelectedModel] = useState<AIModel>(AI_MODELS[0]);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isTransferModalOpen, setIsTransferModalOpen] = useState(false);
 
-  const handleTransferComplete = (destination: ModuleId, mode: string) => {
+  const handleTransferComplete = (destination: ModuleId) => {
     setActiveModule(destination);
   };
 
@@ -47,11 +48,16 @@ export function App() {
         return (
           <ChatView 
             currentModel={selectedModel} 
-            onSelectModel={setSelectedModel} 
+            onSelectModel={setSelectedModel}
+            onOpenMobileMenu={() => setIsMobileMenuOpen(true)}
           />
         );
       case 'studio':
-        return <StudioView />;
+        return (
+          <StudioView 
+            onOpenMobileMenu={() => setIsMobileMenuOpen(true)}
+          />
+        );
       case 'video-editor':
         return (
           <VideoEditorView 
@@ -98,13 +104,17 @@ export function App() {
           <ChatView 
             currentModel={selectedModel} 
             onSelectModel={setSelectedModel} 
+            onOpenMobileMenu={() => setIsMobileMenuOpen(true)}
           />
         );
     }
   };
 
+  // Chat & Studio have their own exact native headers matching Image 1 & Image 2
+  const showGlobalHeader = !['chat', 'studio'].includes(activeModule);
+
   return (
-    <div className="flex h-screen w-screen overflow-hidden bg-parchment text-ink select-none">
+    <div className="flex h-screen w-screen overflow-hidden bg-parchment text-ink select-none font-sans">
       {/* Left Rail Sidebar */}
       <Sidebar
         activeModule={activeModule}
@@ -115,13 +125,15 @@ export function App() {
 
       {/* Main Content Workspace */}
       <div className="flex-1 flex flex-col h-full min-w-0 overflow-hidden">
-        <Header
-          activeModule={activeModule}
-          selectedModel={selectedModel}
-          onOpenMobileMenu={() => setIsMobileMenuOpen(true)}
-          onOpenContextTransfer={() => setIsTransferModalOpen(true)}
-          onSelectModelClick={() => setActiveModule('models-catalog')}
-        />
+        {showGlobalHeader && (
+          <Header
+            activeModule={activeModule}
+            selectedModel={selectedModel}
+            onOpenMobileMenu={() => setIsMobileMenuOpen(true)}
+            onOpenContextTransfer={() => setIsTransferModalOpen(true)}
+            onSelectModelClick={() => setActiveModule('models-catalog')}
+          />
+        )}
 
         <main className="flex-1 flex flex-col h-full min-w-0 overflow-hidden">
           {renderActiveModule()}

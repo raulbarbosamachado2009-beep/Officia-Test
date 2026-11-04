@@ -1,444 +1,382 @@
 import React, { useState } from 'react';
 import { 
-  Code2, 
+  ChevronDown, 
   Eye, 
-  Smartphone, 
+  Code2, 
+  Database, 
   Monitor, 
-  CheckCircle2, 
-  AlertCircle, 
-  Play, 
-  ArrowRight, 
-  Sparkles, 
-  Plus, 
-  X, 
-  Layers, 
-  Send, 
+  RotateCw, 
   ExternalLink, 
-  RefreshCw,
-  FolderGit2
+  Share2, 
+  Zap, 
+  ArrowUp, 
+  Plus, 
+  Mic, 
+  Wrench, 
+  CheckCircle2, 
+  AlertTriangle, 
+  Smartphone, 
+  Sliders, 
+  X,
+  Type,
+  MousePointer,
+  Crop,
+  Layers,
+  Menu
 } from 'lucide-react';
-import { STUDIO_PAGE_CATALOG } from '../../data/mockData';
-import { StudioPageTemplate } from '../../types';
 
-export const StudioView: React.FC = () => {
-  const [selectedTags, setSelectedTags] = useState<string[]>(['Início', 'Produtos', 'Dashboard']);
-  const [showTagPicker, setShowTagPicker] = useState<boolean>(true);
-  const [showCatalogModal, setShowCatalogModal] = useState<boolean>(false);
-  const [activeTab, setActiveTab] = useState<'preview' | 'code' | 'tests'>('preview');
-  const [previewDevice, setPreviewDevice] = useState<'desktop' | 'mobile'>('desktop');
-  const [studioPrompt, setStudioPrompt] = useState('');
-  const [isRunningTests, setIsRunningTests] = useState(false);
-  const [testResults, setTestResults] = useState([
-    { name: 'Validação de Tipos TypeScript (Strict)', passed: true, message: '0 erros de tipo encontrados em 14 arquivos' },
-    { name: 'Autocorreção de Margens & Espaçamentos Apple SF', passed: true, message: 'Tokens de 4px aplicados consistentemente' },
-    { name: 'Verificação de Regressão de Rotas & Autenticação', passed: true, message: 'Sessão preservada ao navegar entre telas' },
-    { name: 'Auditoria de Acessibilidade & Contraste', passed: true, message: 'Relação de contraste Ink (#27251e) sobre Parchment (#faf8f5) = 14.8:1 (AAA)' }
-  ]);
+interface StudioViewProps {
+  onOpenMobileMenu?: () => void;
+}
 
-  const availableQuickTags = [
-    'Início', 
-    'Login', 
-    'Cadastro', 
-    'Produtos', 
-    'Carrinho', 
-    'Perfil', 
-    'Configurações', 
-    'Dashboard', 
-    'Checkout', 
-    'FAQ'
-  ];
+export const StudioView: React.FC<StudioViewProps> = ({ onOpenMobileMenu }) => {
+  const [activeTab, setActiveTab] = useState<'preview' | 'code' | 'db'>('preview');
+  const [currentPage, setCurrentPage] = useState('Página Inicial');
+  const [chatInput, setChatInput] = useState('');
+  const [showUpgradeBanner, setShowUpgradeBanner] = useState(true);
+  const [showPageDropdown, setShowPageDropdown] = useState(false);
+  const [activeFloatingTool, setActiveFloatingTool] = useState<'select' | 'text' | 'crop' | 'inspect'>('select');
 
-  const toggleTag = (tag: string) => {
-    if (selectedTags.includes(tag)) {
-      setSelectedTags(selectedTags.filter(t => t !== tag));
-    } else {
-      setSelectedTags([...selectedTags, tag]);
-    }
-  };
-
-  const handleRunAutocorrectTests = () => {
-    setIsRunningTests(true);
-    setTimeout(() => {
-      setIsRunningTests(false);
-      setTestResults([
-        { name: 'Validação de Tipos TypeScript (Strict)', passed: true, message: '0 erros de tipo encontrados em 14 arquivos' },
-        { name: 'Autocorreção de Margens & Espaçamentos Apple SF', passed: true, message: 'Tokens de 4px aplicados consistentemente' },
-        { name: 'Verificação de Regressão de Rotas & Autenticação', passed: true, message: 'Sessão preservada ao navegar entre telas' },
-        { name: 'Auditoria de Acessibilidade & Contraste', passed: true, message: 'Relação de contraste Ink (#27251e) sobre Parchment (#faf8f5) = 14.8:1 (AAA)' },
-        { name: 'Ciclo Autocorretivo de Funções Anteriores', passed: true, message: 'Todas as chamadas REST testadas e aprovadas com mocking' }
-      ]);
-    }, 1200);
-  };
+  const pages = ['Página Inicial', 'Imersão & Módulos', 'Dashboard', 'Login & Cadastro', 'Sobre o Projeto'];
 
   return (
-    <div className="flex-1 flex flex-col h-full overflow-hidden">
-      {/* Visual Page Catalog Modal */}
-      {showCatalogModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-ink/40 backdrop-blur-xs">
-          <div className="w-full max-w-4xl bg-soft-paper border border-warm-mist rounded-card shadow-subtle p-6 max-h-[88vh] flex flex-col">
-            <div className="flex items-center justify-between pb-3 border-b border-warm-mist/60 mb-4">
-              <div>
-                <h3 className="text-[16px] font-medium text-ink flex items-center gap-2">
-                  <Layers size={18} strokeWidth={2.75} className="text-deep-teal" />
-                  <span>Catálogo Visual de Páginas e Telas</span>
-                </h3>
-                <p className="text-[12px] text-graphite">
-                  Selecione as páginas que farão parte do seu projeto. A IA integrará a navegação preservando o mesmo sistema visual.
-                </p>
-              </div>
-              <button
-                onClick={() => setShowCatalogModal(false)}
-                className="p-1 text-graphite hover:text-ink rounded-btn hover:bg-warm-mist/40 transition-colors"
-              >
-                <X size={18} strokeWidth={2.75} />
-              </button>
-            </div>
-
-            {/* Grid of Templates */}
-            <div className="flex-1 overflow-y-auto grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 pr-1">
-              {STUDIO_PAGE_CATALOG.map((tpl) => {
-                const isSelected = selectedTags.includes(tpl.name.split(' ')[0]);
-
-                return (
-                  <div
-                    key={tpl.id}
-                    onClick={() => toggleTag(tpl.name.split(' ')[0])}
-                    className={`
-                      border rounded-card overflow-hidden bg-parchment cursor-pointer transition-all shadow-subtle flex flex-col
-                      ${isSelected ? 'border-deep-teal ring-2 ring-deep-teal/20' : 'border-warm-mist hover:border-graphite/40'}
-                    `}
-                  >
-                    <div className="h-32 w-full overflow-hidden relative bg-warm-mist/20">
-                      <img 
-                        src={tpl.previewUrl} 
-                        alt={tpl.name}
-                        className="w-full h-full object-cover transition-transform duration-300 hover:scale-105"
-                      />
-                      <span className="absolute top-2 left-2 text-[10px] bg-ink/80 text-parchment px-2 py-0.5 rounded-chip font-medium">
-                        {tpl.category}
-                      </span>
-                      {isSelected && (
-                        <div className="absolute top-2 right-2 w-5 h-5 rounded-full bg-deep-teal text-white flex items-center justify-center">
-                          <CheckCircle2 size={14} strokeWidth={2.75} />
-                        </div>
-                      )}
-                    </div>
-
-                    <div className="p-3 flex-1 flex flex-col justify-between">
-                      <div>
-                        <h4 className="text-[13px] font-medium text-ink">{tpl.name}</h4>
-                        <p className="text-[11px] text-graphite mt-1 line-clamp-2">{tpl.description}</p>
-                      </div>
-
-                      <div className="flex flex-wrap gap-1 mt-3">
-                        {tpl.tags.map((t, idx) => (
-                          <span key={idx} className="text-[9px] px-1.5 py-0.5 rounded-chip bg-soft-paper border border-warm-mist text-graphite">
-                            {t}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-
-            <div className="pt-4 border-t border-warm-mist/60 mt-4 flex justify-between items-center">
-              <span className="text-[12px] text-graphite">
-                {selectedTags.length} telas selecionadas para a arquitetura
-              </span>
-              <button
-                onClick={() => setShowCatalogModal(false)}
-                className="px-4 py-1.5 rounded-inp bg-deep-teal text-white text-[13px] font-medium hover:bg-deep-teal/90 shadow-subtle"
-              >
-                Confirmar Seleção
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Main Studio Viewport (2-Panel: Left Chat & Screen picker, Right Preview/Code/Autocorrect) */}
-      <div className="flex-1 grid grid-cols-1 lg:grid-cols-12 overflow-hidden">
-        {/* Left Side: Developer Chat & Screen Selection (5 cols) */}
-        <div className="lg:col-span-5 border-r border-warm-mist flex flex-col h-full bg-soft-paper/40">
-          {/* Header of left panel */}
-          <div className="p-3 border-b border-warm-mist flex items-center justify-between bg-parchment">
-            <div className="flex items-center gap-2">
-              <Code2 size={16} strokeWidth={2.75} className="text-deep-teal" />
-              <span className="text-[13px] font-medium text-ink">Desenvolvedor Full-Stack</span>
-            </div>
+    <div className="flex-1 flex flex-col h-full bg-[#0d0e12] text-[#f3f4f6] font-sans overflow-hidden select-none">
+      {/* Top Header - Exactly as Image 2 (Lovable IDE) */}
+      <div className="h-13 bg-[#13141a] border-b border-[#232630] px-3 sm:px-4 flex items-center justify-between z-20 shrink-0 text-[13px]">
+        {/* Left: Project title & menu */}
+        <div className="flex items-center gap-1.5">
+          {onOpenMobileMenu && (
             <button
-              onClick={() => setShowTagPicker(!showTagPicker)}
-              className="text-[12px] text-deep-teal hover:underline font-medium flex items-center gap-1"
+              onClick={onOpenMobileMenu}
+              className="lg:hidden p-1.5 text-[#9ca3af] hover:text-white rounded-btn"
+              title="Abrir Menu"
             >
-              <span>{showTagPicker ? 'Ocultar Seleção' : 'Selecionar páginas'}</span>
+              <Menu size={16} strokeWidth={2.5} />
+            </button>
+          )}
+          <button className="flex items-center gap-1.5 px-2 py-1 rounded-btn hover:bg-[#1f222b] text-white font-medium transition-colors">
+            <span className="truncate max-w-[180px] sm:max-w-none">BullyingRealidadeNaoEditada</span>
+            <ChevronDown size={13} strokeWidth={2.5} className="text-[#9ca3af]" />
+          </button>
+        </div>
+
+        {/* Center: Tabs & Device controls */}
+        <div className="flex items-center gap-2">
+          <div className="flex items-center bg-[#1b1d24] p-0.5 rounded-inp border border-[#2b2e38]">
+            <button
+              onClick={() => setActiveTab('preview')}
+              className={`flex items-center gap-1 px-3 py-1 rounded-btn font-medium transition-all ${activeTab === 'preview' ? 'bg-[#2563eb] text-white shadow-xs' : 'text-[#9ca3af] hover:text-white'}`}
+            >
+              <Eye size={13} strokeWidth={2.75} />
+              <span className="hidden sm:inline">Visualização</span>
+            </button>
+            <button
+              onClick={() => setActiveTab('code')}
+              className={`flex items-center gap-1 px-2.5 py-1 rounded-btn font-medium transition-all ${activeTab === 'code' ? 'bg-[#2563eb] text-white shadow-xs' : 'text-[#9ca3af] hover:text-white'}`}
+              title="Código Fonte"
+            >
+              <Code2 size={13} strokeWidth={2.75} />
+            </button>
+            <button
+              onClick={() => setActiveTab('db')}
+              className={`flex items-center gap-1 px-2.5 py-1 rounded-btn font-medium transition-all ${activeTab === 'db' ? 'bg-[#2563eb] text-white shadow-xs' : 'text-[#9ca3af] hover:text-white'}`}
+              title="Banco de Dados"
+            >
+              <Database size={13} strokeWidth={2.75} />
             </button>
           </div>
 
-          {/* Integrated Tag Selection Bar as requested in specification */}
-          {showTagPicker && (
-            <div className="p-3 bg-parchment border-b border-warm-mist space-y-2">
-              <div className="flex items-center justify-between">
-                <span className="text-[11px] font-medium uppercase tracking-wider text-graphite">
-                  Telas do Projeto
-                </span>
-                <button
-                  onClick={() => setShowCatalogModal(true)}
-                  className="text-[11px] text-deep-teal font-medium hover:underline flex items-center gap-1"
-                >
-                  <span>Ver catálogo de telas</span>
-                  <ArrowRight size={11} strokeWidth={2.75} />
-                </button>
+          <div className="hidden md:flex items-center gap-1 pl-1 text-[#9ca3af]">
+            <button className="p-1.5 hover:text-white hover:bg-[#1f222b] rounded-btn">
+              <Monitor size={14} strokeWidth={2.75} />
+            </button>
+            <button className="p-1.5 hover:text-white hover:bg-[#1f222b] rounded-btn">
+              <RotateCw size={14} strokeWidth={2.75} />
+            </button>
+
+            {/* Page dropdown */}
+            <div className="relative">
+              <button
+                onClick={() => setShowPageDropdown(!showPageDropdown)}
+                className="flex items-center gap-1 px-2.5 py-1 rounded-inp bg-[#1b1d24] border border-[#2b2e38] text-[12px] text-white hover:border-[#3b82f6] transition-colors"
+              >
+                <span>{currentPage}</span>
+                <ChevronDown size={12} strokeWidth={2.75} />
+              </button>
+
+              {showPageDropdown && (
+                <div className="absolute top-8 left-0 w-44 bg-[#1b1d24] border border-[#2b2e38] rounded-inp shadow-xl p-1 z-50 text-[12px]">
+                  {pages.map((p) => (
+                    <button
+                      key={p}
+                      onClick={() => {
+                        setCurrentPage(p);
+                        setShowPageDropdown(false);
+                      }}
+                      className="w-full text-left px-2.5 py-1.5 rounded-btn hover:bg-[#2563eb] hover:text-white text-[#d1d5db] transition-colors"
+                    >
+                      {p}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <button className="p-1.5 hover:text-white hover:bg-[#1f222b] rounded-btn">
+              <ExternalLink size={14} strokeWidth={2.75} />
+            </button>
+          </div>
+        </div>
+
+        {/* Right: Actions */}
+        <div className="flex items-center gap-2">
+          <button className="hidden sm:flex items-center gap-1 px-2.5 py-1 rounded-inp text-[#d1d5db] hover:bg-[#1f222b] text-[12px] transition-colors">
+            <Share2 size={13} strokeWidth={2.75} />
+            <span>Compartilhar</span>
+          </button>
+
+          <button className="flex items-center gap-1.5 px-3 py-1 rounded-chip bg-[#7c3aed] hover:bg-[#6d28d9] text-white text-[12px] font-medium shadow-xs transition-colors">
+            <Zap size={12} strokeWidth={2.75} className="fill-white" />
+            <span>Fazer upgrade</span>
+          </button>
+
+          <button className="px-3.5 py-1 rounded-chip bg-white hover:bg-[#e5e7eb] text-[#111827] text-[12px] font-medium shadow-xs transition-colors">
+            Publicar
+          </button>
+        </div>
+      </div>
+
+      {/* Main Split Layout: Left Chat, Right Preview */}
+      <div className="flex-1 grid grid-cols-1 lg:grid-cols-12 overflow-hidden">
+        {/* Left Column: Lovable Chat / Diagnostic Panel (Image 2 style) */}
+        <div className="lg:col-span-4 border-r border-[#232630] flex flex-col h-full bg-[#111217]">
+          {/* Messages scroll area */}
+          <div className="flex-1 overflow-y-auto p-4 space-y-4 text-[13px] leading-relaxed">
+            {/* User message with thumbnail as shown in Image 2 */}
+            <div className="flex flex-col items-end">
+              <div className="bg-[#1e2029] border border-[#2e3240] rounded-[16px] p-3 text-white max-w-[90%] shadow-sm space-y-2">
+                <div className="w-16 h-10 rounded-md bg-[#13141a] border border-[#2b2e38] overflow-hidden flex items-center justify-center">
+                  <span className="text-[9px] text-[#9ca3af] font-mono">ERR_TIMEOUT</span>
+                </div>
+                <p className="text-[13px] text-[#e5e7eb]">
+                  Apareceu isso. Então significa que o link não está entrando, quero que você arrume para mim.
+                </p>
+              </div>
+            </div>
+
+            {/* Assistant response as shown in Image 2 */}
+            <div className="space-y-2 text-[#d1d5db]">
+              <div className="flex items-center gap-1.5 text-[11px] text-[#9ca3af]">
+                <span className="w-1.5 h-1.5 rounded-full bg-[#3b82f6]"></span>
+                <span>Usou 2 ferramentas</span>
               </div>
 
-              {/* Tag chips */}
-              <div className="flex flex-wrap gap-1.5">
-                {availableQuickTags.map((tag) => {
-                  const isSelected = selectedTags.includes(tag);
-                  return (
-                    <button
-                      key={tag}
-                      onClick={() => toggleTag(tag)}
-                      className={`
-                        text-[11px] px-2.5 py-1 rounded-chip border transition-all
-                        ${isSelected 
-                          ? 'bg-deep-teal text-white border-deep-teal font-medium shadow-subtle' 
-                          : 'bg-soft-paper text-ink border-warm-mist hover:border-graphite/40'}
-                      `}
-                    >
-                      {tag}
-                    </button>
-                  );
-                })}
+              <div className="bg-[#161820] border border-[#232630] rounded-[14px] p-3.5 space-y-3 shadow-xs">
+                <p>
+                  Testei de novo agora, de fora da sua rede: o link abre normalmente (<code className="bg-[#20232c] px-1 py-0.5 rounded text-[#93c5fd]">/</code>, <code className="bg-[#20232c] px-1 py-0.5 rounded text-[#93c5fd]">/home</code> e <code className="bg-[#20232c] px-1 py-0.5 rounded text-[#93c5fd]">/chat</code> funcionando). O site está no ar e público. O erro "demorou muito para responder" (<span className="text-[#f87171] font-mono text-[12px]">ERR_CONNECTION_TIMED_OUT</span>) quer dizer que a internet desse computador não consegue chegar ao endereço.
+                </p>
+                <p>
+                  Esse bloqueio está na rede desse computador, provavelmente um filtro de escola ou trabalho, um firewall ou um antivírus. Não consigo corrigir isso mexendo no site.
+                </p>
+
+                <div className="space-y-1.5 pt-1 text-[12px]">
+                  <p className="font-medium text-white">Para confirmar e entrar:</p>
+                  <ol className="list-decimal pl-4 space-y-1 text-[#9ca3af]">
+                    <li>
+                      <span className="text-white">Celular com dados móveis (4G/5G), sem Wi-Fi:</span> abra o link público. Se abrir, é certeza que o bloqueio é da rede local.
+                    </li>
+                    <li>
+                      <span className="text-white">Neste computador:</span> use a internet do celular (roteador/hotspot) e tente de novo.
+                    </li>
+                    <li>
+                      <span className="text-white">Se for rede de escola ou trabalho:</span> peça ao responsável pela internet para liberar o endereço.
+                    </li>
+                  </ol>
+                </div>
+
+                {/* Action pills at bottom of message */}
+                <div className="pt-2 flex flex-wrap gap-2">
+                  <a
+                    href="#docs"
+                    className="inline-flex items-center gap-1 px-3 py-1 rounded-chip bg-[#1e293b] border border-[#3b82f6]/40 text-[#60a5fa] text-[11px] font-medium hover:bg-[#2563eb] hover:text-white transition-colors"
+                  >
+                    <span>Troubleshooting docs</span>
+                    <ExternalLink size={10} strokeWidth={2.75} />
+                  </a>
+                  <button
+                    className="inline-flex items-center gap-1 px-3 py-1 rounded-chip bg-[#1e293b] border border-[#3b82f6]/40 text-[#60a5fa] text-[11px] font-medium hover:bg-[#2563eb] hover:text-white transition-colors"
+                  >
+                    <span>Veja quem visita seu app</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Sticky compilation credit banner */}
+          {showUpgradeBanner && (
+            <div className="p-2.5 bg-[#171922] border-t border-[#232630] flex items-center justify-between text-[11px] text-[#9ca3af] px-3">
+              <span>O crédito de compilação gratuito restante hoje</span>
+              <div className="flex items-center gap-2">
+                <button className="text-[11px] font-medium text-white bg-[#7c3aed] px-2.5 py-0.5 rounded-chip hover:bg-[#6d28d9]">
+                  Fazer upgrade agora
+                </button>
+                <button onClick={() => setShowUpgradeBanner(false)} className="text-[#6b7280] hover:text-white">
+                  <X size={12} strokeWidth={2.75} />
+                </button>
               </div>
             </div>
           )}
 
-          {/* Chat history inside studio */}
-          <div className="flex-1 overflow-y-auto p-4 space-y-3">
-            <div className="p-3 rounded-card bg-parchment border border-warm-mist text-[13px] text-ink shadow-subtle">
-              <div className="text-[11px] font-medium text-deep-teal mb-1">Engenheiro Full-Stack</div>
-              Configurei o projeto com base no design system Apple San Francisco e nas telas selecionadas: 
-              <span className="font-medium text-ink"> {selectedTags.join(', ')}</span>.
-              <br /><br />
-              O preview interativo ao lado renderiza os componentes em tempo real com estado compartilhado. Você pode solicitar alterações pontuais a qualquer momento.
-            </div>
-
-            <div className="p-3 rounded-card bg-soft-paper border border-warm-mist text-[12px] text-graphite flex items-center gap-2">
-              <CheckCircle2 size={14} strokeWidth={2.75} className="text-emerald-700" />
-              <span>Ciclo autocorretivo pronto: todos os testes de regressão passando.</span>
-            </div>
-          </div>
-
-          {/* Chat input for code changes */}
-          <div className="p-3 border-t border-warm-mist bg-parchment">
-            <div className="flex gap-2">
+          {/* Chat input box at bottom */}
+          <div className="p-3 bg-[#13141a] border-t border-[#232630]">
+            <div className="bg-[#1b1d24] border border-[#2b2e38] rounded-inp p-2 focus-within:border-[#3b82f6] transition-all">
               <input
                 type="text"
-                value={studioPrompt}
-                onChange={(e) => setStudioPrompt(e.target.value)}
-                placeholder="Peça alterações no código, adicione rotas ou modifique componentes..."
-                className="flex-1 bg-soft-paper border border-warm-mist rounded-inp px-3 py-2 text-[13px] text-ink placeholder:text-graphite outline-hidden focus:border-deep-teal"
+                value={chatInput}
+                onChange={(e) => setChatInput(e.target.value)}
+                placeholder="Pergunte à Lovable / AI Studio..."
+                className="w-full bg-transparent text-[13px] text-white placeholder:text-[#6b7280] outline-hidden px-1"
               />
-              <button
-                className="w-8 h-8 rounded-inp bg-ink text-parchment flex items-center justify-center hover:bg-pure-black transition-colors shrink-0 shadow-subtle"
-                aria-label="Executar comando"
-              >
-                <Send size={13} strokeWidth={2.75} />
-              </button>
+
+              <div className="flex items-center justify-between pt-2">
+                <div className="flex items-center gap-1.5">
+                  <button className="p-1 text-[#9ca3af] hover:text-white hover:bg-[#252834] rounded-btn">
+                    <Plus size={14} strokeWidth={2.75} />
+                  </button>
+                  <button className="flex items-center gap-1 px-2 py-0.5 rounded-btn bg-[#232632] text-[#d1d5db] text-[11px] hover:text-white">
+                    <span>Criar</span>
+                    <ChevronDown size={11} strokeWidth={2.75} />
+                  </button>
+                </div>
+
+                <div className="flex items-center gap-1.5">
+                  <button className="p-1 text-[#9ca3af] hover:text-white hover:bg-[#252834] rounded-btn">
+                    <Mic size={14} strokeWidth={2.75} />
+                  </button>
+                  <button className="w-6 h-6 rounded-full bg-[#2563eb] text-white flex items-center justify-center hover:bg-[#1d4ed8] transition-colors">
+                    <ArrowUp size={13} strokeWidth={2.75} />
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
         </div>
 
-        {/* Right Side: Live Interactive Workspace (7 cols) */}
-        <div className="lg:col-span-7 flex flex-col h-full bg-parchment">
-          {/* Top Bar with Tabs and Device Switcher */}
-          <div className="h-11 px-4 border-b border-warm-mist flex items-center justify-between bg-parchment">
-            {/* Tabs */}
-            <div className="flex items-center gap-1">
-              {[
-                { id: 'preview', label: 'Pré-Visualização', icon: Eye },
-                { id: 'code', label: 'Código Fonte', icon: Code2 },
-                { id: 'tests', label: 'Autocorreção & Testes', icon: CheckCircle2 },
-              ].map((tab) => {
-                const Icon = tab.icon;
-                const isActive = activeTab === tab.id;
-                return (
-                  <button
-                    key={tab.id}
-                    onClick={() => setActiveTab(tab.id as any)}
-                    className={`
-                      flex items-center gap-1.5 px-3 py-1 rounded-btn text-[12px] transition-all
-                      ${isActive 
-                        ? 'bg-deep-teal text-white font-medium shadow-subtle' 
-                        : 'text-graphite hover:text-ink hover:bg-soft-paper'}
-                    `}
-                  >
-                    <Icon size={13} strokeWidth={2.75} />
-                    <span>{tab.label}</span>
+        {/* Right Column: Live Interactive Web Canvas - Exactly as Image 2 */}
+        <div className="lg:col-span-8 bg-[#07080b] flex flex-col h-full relative overflow-hidden">
+          {activeTab === 'preview' && (
+            <div className="flex-1 flex flex-col items-center justify-center p-6 relative overflow-y-auto">
+              {/* Radial background glowing aura matching Image 2 */}
+              <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_35%,rgba(37,99,235,0.18),transparent_65%)] pointer-events-none" />
+
+              {/* Main Content inside the preview matching Image 2 */}
+              <div className="relative z-10 max-w-xl text-center space-y-6">
+                {/* Pill tag */}
+                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-chip bg-[#1e293b]/70 border border-[#3b82f6]/30 text-[#60a5fa] text-[11px] font-medium tracking-wide">
+                  <span className="w-1.5 h-1.5 rounded-full bg-[#3b82f6] animate-pulse"></span>
+                  <span>IMERSÃO ESCOLAR</span>
+                </div>
+
+                {/* Big Title */}
+                <h1 className="text-4xl sm:text-5xl md:text-6xl font-medium tracking-tight text-white leading-tight">
+                  Realidade <br />
+                  <span className="text-[#38bdf8]">não editada</span>
+                </h1>
+
+                {/* Subtitle */}
+                <p className="text-[14px] sm:text-[15px] text-[#9ca3af] max-w-md mx-auto leading-relaxed">
+                  Bullying não é brincadeira. Aqui você aprende a identificar, prevenir, agir e apoiar — em poucos minutos.
+                </p>
+
+                {/* Badge */}
+                <div className="pt-2">
+                  <span className="text-[12px] text-[#6b7280]">
+                    Uma imersão sobre <span className="text-[#38bdf8] font-medium">respeito</span>
+                  </span>
+                </div>
+
+                {/* Blue CTA Button */}
+                <div className="pt-2">
+                  <button className="px-6 py-2.5 rounded-chip bg-[#2563eb] hover:bg-[#1d4ed8] text-white font-medium text-[14px] shadow-lg shadow-blue-500/20 hover:scale-105 active:scale-95 transition-all">
+                    Começar
                   </button>
-                );
-              })}
+                </div>
+              </div>
+
+              {/* Floating Bottom Canvas Tools Dock - Matching Image 2 */}
+              <div className="absolute bottom-6 bg-[#161822]/90 backdrop-blur-md border border-[#2b2e3d] rounded-chip px-3 py-1.5 flex items-center gap-3 shadow-2xl z-30">
+                <button
+                  onClick={() => setActiveFloatingTool('select')}
+                  className={`p-1.5 rounded-full transition-colors ${activeFloatingTool === 'select' ? 'bg-[#2563eb] text-white' : 'text-[#9ca3af] hover:text-white'}`}
+                  title="Selecionar elemento"
+                >
+                  <MousePointer size={14} strokeWidth={2.75} />
+                </button>
+                <button
+                  onClick={() => setActiveFloatingTool('text')}
+                  className={`p-1.5 rounded-full transition-colors ${activeFloatingTool === 'text' ? 'bg-[#2563eb] text-white' : 'text-[#9ca3af] hover:text-white'}`}
+                  title="Editar texto"
+                >
+                  <Type size={14} strokeWidth={2.75} />
+                </button>
+                <button
+                  onClick={() => setActiveFloatingTool('crop')}
+                  className={`p-1.5 rounded-full transition-colors ${activeFloatingTool === 'crop' ? 'bg-[#2563eb] text-white' : 'text-[#9ca3af] hover:text-white'}`}
+                  title="Enquadramento"
+                >
+                  <Crop size={14} strokeWidth={2.75} />
+                </button>
+                <button
+                  onClick={() => setActiveFloatingTool('inspect')}
+                  className={`p-1.5 rounded-full transition-colors ${activeFloatingTool === 'inspect' ? 'bg-[#2563eb] text-white' : 'text-[#9ca3af] hover:text-white'}`}
+                  title="Inspecionar camadas"
+                >
+                  <Layers size={14} strokeWidth={2.75} />
+                </button>
+              </div>
             </div>
+          )}
 
-            {/* Device Switcher (for preview tab) */}
-            {activeTab === 'preview' && (
-              <div className="flex items-center gap-1 bg-soft-paper p-0.5 rounded-btn border border-warm-mist">
-                <button
-                  onClick={() => setPreviewDevice('desktop')}
-                  className={`p-1 rounded-btn text-[11px] ${previewDevice === 'desktop' ? 'bg-parchment text-ink shadow-subtle' : 'text-graphite'}`}
-                  title="Visualização Desktop"
-                >
-                  <Monitor size={14} strokeWidth={2.75} />
-                </button>
-                <button
-                  onClick={() => setPreviewDevice('mobile')}
-                  className={`p-1 rounded-btn text-[11px] ${previewDevice === 'mobile' ? 'bg-parchment text-ink shadow-subtle' : 'text-graphite'}`}
-                  title="Visualização Mobile"
-                >
-                  <Smartphone size={14} strokeWidth={2.75} />
-                </button>
-              </div>
-            )}
-          </div>
-
-          {/* Tab Contents */}
-          <div className="flex-1 overflow-y-auto p-4 flex items-center justify-center bg-warm-mist/10">
-            {activeTab === 'preview' && (
-              <div className={`
-                transition-all duration-300 bg-parchment border border-warm-mist rounded-card shadow-subtle overflow-hidden flex flex-col
-                ${previewDevice === 'mobile' ? 'w-[375px] h-[640px]' : 'w-full h-full'}
-              `}>
-                {/* Simulated browser navbar */}
-                <div className="h-8 bg-soft-paper border-b border-warm-mist px-3 flex items-center justify-between text-[11px] text-graphite">
-                  <div className="flex items-center gap-1.5">
-                    <span className="w-2.5 h-2.5 rounded-full bg-warm-mist/80"></span>
-                    <span className="w-2.5 h-2.5 rounded-full bg-warm-mist/80"></span>
-                    <span className="w-2.5 h-2.5 rounded-full bg-warm-mist/80"></span>
-                  </div>
-                  <div className="px-3 py-0.5 bg-parchment border border-warm-mist rounded-chip text-[10px] text-ink font-mono">
-                    https://app.officia.internal/preview
-                  </div>
-                  <ExternalLink size={12} strokeWidth={2.75} className="text-graphite" />
-                </div>
-
-                {/* Simulated Live Rendered Application with Apple SF typography */}
-                <div className="flex-1 overflow-y-auto p-6 space-y-6">
-                  {/* Hero of previewed app */}
-                  <div className="text-center space-y-2 py-4">
-                    <span className="text-[11px] text-deep-teal font-medium bg-deep-teal/10 px-2.5 py-0.5 rounded-chip">
-                      Sistema Ativo • 8 Telas Integradas
-                    </span>
-                    <h2 className="text-[24px] font-medium text-ink tracking-tight">
-                      Próxima Geração de Soluções
-                    </h2>
-                    <p className="text-[13px] text-graphite max-w-md mx-auto">
-                      Construído automaticamente com tipografia Apple San Francisco e design Parchment.
-                    </p>
-                  </div>
-
-                  {/* Active pages grid in the preview */}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    {selectedTags.map((tag, idx) => (
-                      <div key={idx} className="p-4 bg-soft-paper border border-warm-mist rounded-card shadow-subtle">
-                        <div className="flex items-center justify-between">
-                          <span className="text-[13px] font-medium text-ink">{tag}</span>
-                          <span className="text-[10px] text-deep-teal font-medium">Ativo</span>
-                        </div>
-                        <p className="text-[11px] text-graphite mt-1">
-                          Componente modular pronto com dados reativos e rotas configuradas.
-                        </p>
-                      </div>
-                    ))}
-                  </div>
-
-                  {/* Sample CTA */}
-                  <div className="p-4 rounded-card bg-ink text-parchment flex items-center justify-between shadow-subtle">
-                    <div>
-                      <h4 className="text-[13px] font-medium">Pronto para publicação</h4>
-                      <p className="text-[11px] text-parchment/70">Código testado com 0 regressões.</p>
-                    </div>
-                    <button className="px-3 py-1 bg-deep-teal text-white rounded-inp text-[12px] font-medium">
-                      Ver Demo
-                    </button>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {activeTab === 'code' && (
-              <div className="w-full h-full bg-soft-paper border border-warm-mist rounded-card p-4 overflow-auto font-mono text-[12px] text-ink leading-relaxed">
-                <div className="text-graphite text-[11px] mb-2">// Gerado pelo Agente Full-Stack com TypeScript estrito</div>
-                <pre className="text-ink">
-{`import React, { useState } from 'react';
-import { Layers, CheckCircle } from 'lucide-react';
-
-export const GeneratedApp: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<'inicio' | 'produtos'>('inicio');
-
+          {activeTab === 'code' && (
+            <div className="flex-1 p-6 font-mono text-[12px] text-[#e5e7eb] overflow-auto bg-[#0b0c10]">
+              <div className="text-[#6b7280] mb-2">// Código TSX gerado pelo AI Studio com Tailwind e Apple SF</div>
+              <pre>
+{`export default function RealityPage() {
   return (
-    <div className="min-h-screen bg-[#faf8f5] text-[#27251e] font-sans p-6">
-      <header className="border-b border-[#d1d1cd] pb-4 flex justify-between">
-        <h1 className="text-xl font-medium tracking-tight">Plataforma Officia</h1>
-        <nav className="flex gap-4 text-sm text-[#72706b]">
-          ${selectedTags.map(t => `<button className="hover:text-[#27251e]">${t}</button>`).join('\n          ')}
-        </nav>
-      </header>
-      
-      <main className="max-w-[900px] mx-auto py-8">
-        <h2 className="text-2xl font-medium mb-4">Bem-vindo à nova interface</h2>
-        <p className="text-[#72706b]">Tipografia estrita Apple San Francisco Pro.</p>
-      </main>
+    <div className="min-h-screen bg-[#07080b] flex flex-col items-center justify-center p-6 text-center">
+      <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#1e293b]/70 border border-[#3b82f6]/30 text-[#60a5fa] text-[11px] font-medium">
+        <span>IMERSÃO ESCOLAR</span>
+      </div>
+
+      <h1 className="text-5xl font-medium text-white tracking-tight mt-6">
+        Realidade <span className="text-[#38bdf8]">não editada</span>
+      </h1>
+
+      <p className="text-[15px] text-[#9ca3af] max-w-md mt-4">
+        Bullying não é brincadeira. Aqui você aprende a identificar, prevenir, agir e apoiar — em poucos minutos.
+      </p>
+
+      <button className="mt-8 px-6 py-2.5 rounded-full bg-[#2563eb] text-white font-medium">
+        Começar
+      </button>
     </div>
   );
-};`}
-                </pre>
+}`}
+              </pre>
+            </div>
+          )}
+
+          {activeTab === 'db' && (
+            <div className="flex-1 p-6 text-[13px] text-[#d1d5db] overflow-auto space-y-4">
+              <h3 className="text-white font-medium text-[15px]">Tabelas & Modelos Supabase</h3>
+              <div className="border border-[#232630] rounded-card bg-[#111217] p-4 space-y-2">
+                <div className="font-mono text-[12px] text-[#38bdf8]">users (id, email, role, created_at)</div>
+                <div className="font-mono text-[12px] text-[#38bdf8]">modules (id, title, content_url, completion_rate)</div>
+                <div className="font-mono text-[12px] text-[#38bdf8]">feedback (id, user_id, message, status)</div>
               </div>
-            )}
-
-            {activeTab === 'tests' && (
-              <div className="w-full h-full bg-soft-paper border border-warm-mist rounded-card p-6 overflow-y-auto space-y-4">
-                <div className="flex items-center justify-between pb-3 border-b border-warm-mist/60">
-                  <div>
-                    <h3 className="text-[15px] font-medium text-ink flex items-center gap-2">
-                      <CheckCircle2 size={16} strokeWidth={2.75} className="text-emerald-700" />
-                      <span>Ciclo de Testes e Programador Autocorretivo</span>
-                    </h3>
-                    <p className="text-[12px] text-graphite">
-                      A IA implementa alterações, executa testes, detecta anomalias e aplica autocorreção imediata.
-                    </p>
-                  </div>
-
-                  <button
-                    onClick={handleRunAutocorrectTests}
-                    disabled={isRunningTests}
-                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-inp bg-deep-teal text-white text-[12px] font-medium hover:bg-deep-teal/90 shadow-subtle disabled:opacity-50"
-                  >
-                    <RefreshCw size={12} strokeWidth={2.75} className={isRunningTests ? 'animate-spin' : ''} />
-                    <span>{isRunningTests ? 'Testando...' : 'Reexecutar Bateria de Testes'}</span>
-                  </button>
-                </div>
-
-                <div className="space-y-2.5">
-                  {testResults.map((test, idx) => (
-                    <div 
-                      key={idx}
-                      className="p-3 rounded-inp bg-parchment border border-warm-mist flex items-start justify-between gap-3 shadow-subtle"
-                    >
-                      <div className="space-y-0.5">
-                        <div className="text-[13px] font-medium text-ink">{test.name}</div>
-                        <div className="text-[12px] text-graphite">{test.message}</div>
-                      </div>
-                      <span className="text-[11px] px-2 py-0.5 rounded-chip bg-emerald-100 text-emerald-800 font-medium shrink-0">
-                        Aprovado
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
+            </div>
+          )}
         </div>
       </div>
     </div>
