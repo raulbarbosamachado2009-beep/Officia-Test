@@ -1,0 +1,158 @@
+@font-face {
+  font-family: 'SF Pro Display';
+  src: url('/fonts/SF-Pro-Display-Regular.otf') format('opentype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'SF Pro Display';
+  src: url('/fonts/SF-Pro-Display-Medium.otf') format('opentype');
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'SF Pro Display';
+  src: url('/fonts/SF-Pro-Display-Semibold.otf') format('opentype');
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'SF Pro Display';
+  src: url('/fonts/SF-Pro-Display-Bold.otf') format('opentype');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'SF Pro Text';
+  src: url('/fonts/SF-Pro-Text-Regular.otf') format('opentype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'SF Pro Text';
+  src: url('/fonts/SF-Pro-Text-Medium.otf') format('opentype');
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'SF Pro Text';
+  src: url('/fonts/SF-Pro-Text-Semibold.otf') format('opentype');
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'SF Pro Text';
+  src: url('/fonts/SF-Pro-Text-Bold.otf') format('opentype');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'SF Pro Rounded';
+  src: url('/fonts/SF-Pro-Rounded-Medium.otf') format('opentype');
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  /* Design Tokens from DESIGN.MD (Tema Claro) */
+  --color-parchment: #faf8f5;
+  --color-soft-paper: #fdfbfa;
+  --color-warm-mist: #d1d1cd;
+  --color-ash: #92918b;
+  --color-graphite: #72706b;
+  --color-ink: #27251e;
+  --color-pure-black: #000000;
+  --color-deep-teal: #016a71;
+
+  /* Typography: Exclusively Apple San Francisco Pro */
+  --font-sf-display: 'SF Pro Display', -apple-system, sans-serif;
+  --font-sf-text: 'SF Pro Text', -apple-system, sans-serif;
+  --font-sf-rounded: 'SF Pro Rounded', -apple-system, sans-serif;
+
+  /* Typography Scale */
+  --text-caption: 11px;
+  --leading-caption: 1.43;
+  --text-body-sm: 12px;
+  --leading-body-sm: 1.43;
+  --text-body: 14px;
+  --leading-body: 1.43;
+  --text-body-lg: 16px;
+  --leading-body-lg: 1.5;
+
+  /* Spacing */
+  --spacing-4: 4px;
+  --spacing-8: 8px;
+  --spacing-12: 12px;
+  --spacing-16: 16px;
+  --spacing-32: 32px;
+
+  /* Elevation */
+  --shadow-subtle: 0px 1px 2px 0px rgba(0, 0, 0, 0.08);
+}
+
+.dark {
+  /* Tokens de Design para Modo Escuro Oficial */
+  --color-parchment: #121316;
+  --color-soft-paper: #1a1c23;
+  --color-warm-mist: #2c2f3b;
+  --color-ash: #6b7280;
+  --color-graphite: #9ca3af;
+  --color-ink: #f3f4f6;
+  --color-pure-black: #ffffff;
+  --color-deep-teal: #14b8a6;
+  --shadow-subtle: 0px 1px 3px 0px rgba(0, 0, 0, 0.4);
+}
+
+* {
+  box-sizing: border-box;
+  font-family: 'SF Pro Text', 'SF Pro Display', -apple-system, sans-serif !important;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  background-color: var(--color-parchment);
+  color: var(--color-ink);
+  font-family: 'SF Pro Text', 'SF Pro Display', -apple-system, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  line-height: 1.43;
+  letter-spacing: 0;
+}
+
+/* Custom scrollbars matching the quiet parchment theme */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--color-warm-mist);
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-ash);
+}
