@@ -30,11 +30,17 @@ import {
   ChevronDown,
   PanelLeftClose,
   Compass,
+  Settings,
+  ShieldCheck,
+  Zap,
+  HelpCircle,
+  Clock,
+  Command as CommandIcon
 } from 'lucide-react';
 import { ModuleId, SectorId } from '../../types';
 import { UserProfileMenu } from './UserProfileMenu';
+import { SearchModal, CommandItem } from '../ui/search-modal';
 
-// Ícone oficial idêntico à imagem de referência do usuário
 export const SidebarToggleIcon: React.FC<{ size?: number; className?: string }> = ({ size = 16, className = "" }) => (
   <svg 
     width={size} 
@@ -87,10 +93,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
   isOpenMobile,
   onCloseMobile 
 }) => {
-  const [searchQuery, setSearchQuery] = useState('');
-  const [showSearchInput, setShowSearchInput] = useState(false);
-
-  // Estrutura Oficial dos Setores do Officia — SEM NENHUMA NUMERAÇÃO
   const sectors: SectorDefinition[] = [
     {
       id: 'creator',
@@ -165,6 +167,108 @@ export const Sidebar: React.FC<SidebarProps> = ({
     { id: 'rec-3', title: 'Parecer Acordo Sócios Harvey', module: 'harvey' as ModuleId, sector: 'business' as SectorId },
   ];
 
+  // Comandos de busca para o SearchModal
+  const searchCommands: CommandItem[] = [
+    {
+      id: 'cmd-chat',
+      title: 'Chat Principal',
+      description: 'Conversação aberta e raciocínio com múltiplos modelos de IA',
+      category: 'Início',
+      icon: Compass,
+      onSelect: () => {
+        onSelectSector('home');
+        onSelectModule('chat', 'home');
+      }
+    },
+    {
+      id: 'cmd-studio',
+      title: 'AI Studio',
+      description: 'Desenvolvimento de sites e aplicações web por linguagem natural',
+      category: 'Creator',
+      icon: Code2,
+      onSelect: () => {
+        onSelectSector('creator');
+        onSelectModule('studio', 'creator');
+      }
+    },
+    {
+      id: 'cmd-ai-editor',
+      title: 'IA Editor',
+      description: 'Criação e edição inteligente multimodal',
+      category: 'Edição',
+      icon: Wand2,
+      onSelect: () => {
+        onSelectSector('editing');
+        onSelectModule('ai-editor', 'editing');
+      }
+    },
+    {
+      id: 'cmd-video',
+      title: 'Editor de Vídeo',
+      description: 'Timeline multifaixa, corte inteligente e exportação 4K',
+      category: 'Edição',
+      icon: Film,
+      onSelect: () => {
+        onSelectSector('editing');
+        onSelectModule('video-editor', 'editing');
+      }
+    },
+    {
+      id: 'cmd-crm',
+      title: 'CRM de Vendas & Oportunidades',
+      description: 'Acompanhamento do funil de clientes e previsão por IA',
+      category: 'Business',
+      icon: Users,
+      onSelect: () => {
+        onSelectSector('business');
+        onSelectModule('crm', 'business');
+      }
+    },
+    {
+      id: 'cmd-marketing',
+      title: 'Central de Marketing',
+      description: 'Campanhas, geração de copies e planejamento editorial',
+      category: 'Business',
+      icon: Megaphone,
+      onSelect: () => {
+        onSelectSector('business');
+        onSelectModule('marketing', 'business');
+      }
+    },
+    {
+      id: 'cmd-comms',
+      title: 'Comunicação Corporativa (WhatsApp)',
+      description: 'Mensagens omnichannel integradas ao CRM',
+      category: 'Business',
+      icon: MessageSquare,
+      onSelect: () => {
+        onSelectSector('business');
+        onSelectModule('communication', 'business');
+      }
+    },
+    {
+      id: 'cmd-coordinator',
+      title: 'Coordenador Global',
+      description: 'Orquestração e delegação de tarefas entre setores',
+      category: 'Inteligência',
+      icon: Bot,
+      onSelect: () => {
+        onSelectSector('intelligence');
+        onSelectModule('coordinator', 'intelligence');
+      }
+    },
+    {
+      id: 'cmd-settings',
+      title: 'Configurações do Officia',
+      description: 'Catálogo de modelos, memória universal e preferências',
+      category: 'Sistema',
+      icon: Settings,
+      onSelect: () => {
+        onOpenSettings();
+      }
+    }
+  ];
+
   const handleSectorClick = (sector: SectorDefinition) => {
     onSelectSector(sector.id);
     if (sector.submodules && sector.submodules.length > 0) {
@@ -185,7 +289,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
   return (
     <>
-      {/* Mobile backdrop */}
       {isOpenMobile && (
         <div 
           className="fixed inset-0 bg-ink/30 backdrop-blur-xs z-40 lg:hidden"
@@ -231,17 +334,31 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 >
                   <Plus size={16} strokeWidth={2.5} />
                 </button>
-                <button 
-                  onClick={() => setShowSearchInput(!showSearchInput)}
-                  className="p-1.5 hover:text-ink hover:bg-soft-paper rounded-btn transition-colors cursor-pointer"
-                  title="Busca Global"
-                >
-                  <Search size={15} strokeWidth={2.5} />
-                </button>
+
+                {/* Ícone Lupa abre o SearchModal */}
+                <SearchModal data={searchCommands}>
+                  <button 
+                    className="p-1.5 hover:text-ink hover:bg-soft-paper rounded-btn transition-colors cursor-pointer"
+                    title="Busca Global (Ctrl+K)"
+                  >
+                    <Search size={15} strokeWidth={2.5} />
+                  </button>
+                </SearchModal>
               </>
             )}
 
-            {/* Botão de Recolher/Expandir idêntico à imagem de referência */}
+            {/* Se recolhida, o botão de busca rápida */}
+            {isCollapsed && (
+              <SearchModal data={searchCommands}>
+                <button 
+                  className="p-2 hover:text-ink hover:bg-soft-paper rounded-btn transition-colors cursor-pointer"
+                  title="Busca Global (Ctrl+K)"
+                >
+                  <Search size={16} strokeWidth={2.5} />
+                </button>
+              </SearchModal>
+            )}
+
             <button
               onClick={onToggleCollapse}
               className="p-1.5 hover:text-ink hover:bg-soft-paper rounded-btn transition-colors cursor-pointer"
@@ -251,7 +368,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
               <SidebarToggleIcon size={17} className="text-graphite hover:text-ink" />
             </button>
 
-            {/* Fechar no mobile */}
             <button 
               onClick={onCloseMobile}
               className="p-1.5 hover:text-ink hover:bg-soft-paper rounded-btn transition-colors lg:hidden"
@@ -261,19 +377,23 @@ export const Sidebar: React.FC<SidebarProps> = ({
           </div>
         </div>
 
-        {/* Campo de Busca Global (se expandido) */}
-        {!isCollapsed && showSearchInput && (
-          <div className="px-3 pt-2">
-            <div className="relative">
-              <Search size={12} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-graphite" />
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Buscar setores, comandos..."
-                className="w-full pl-7 pr-2.5 py-1 rounded-inp bg-soft-paper border border-warm-mist text-[12px] text-ink placeholder:text-graphite outline-hidden focus:border-deep-teal"
-              />
-            </div>
+        {/* BARRA DE NAVEGAÇÃO DE BUSCA NO MENU LATERAL (SearchModal Integrado) */}
+        {!isCollapsed && (
+          <div className="px-3 pt-2.5 pb-1">
+            <SearchModal data={searchCommands}>
+              <button
+                type="button"
+                className="w-full flex items-center justify-between px-3 py-1.5 rounded-xl bg-soft-paper border border-warm-mist/80 hover:border-deep-teal text-graphite hover:text-ink text-[12px] transition-all shadow-2xs cursor-pointer group"
+              >
+                <div className="flex items-center gap-2">
+                  <Search size={13} className="text-graphite group-hover:text-deep-teal transition-colors" />
+                  <span>Buscar ferramentas...</span>
+                </div>
+                <kbd className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-parchment border border-warm-mist text-graphite">
+                  ⌘K
+                </kbd>
+              </button>
+            </SearchModal>
           </div>
         )}
 
@@ -304,12 +424,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
           </button>
         </div>
 
-        {/* Divisória discreta */}
         <div className="px-3 py-1">
           <div className="h-[1px] bg-warm-mist/50" />
         </div>
 
-        {/* Lista Oficial dos Setores (SEM NUMERAÇÕES) */}
+        {/* Lista Oficial dos Setores */}
         <div className="flex-1 overflow-y-auto px-2 py-1 space-y-1">
           {sectors.map((sector) => {
             const SectorIcon = sector.icon;
@@ -317,7 +436,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
             return (
               <div key={sector.id} className="space-y-0.5">
-                {/* Primeiro Nível: Setor Principal */}
                 <button
                   type="button"
                   onClick={() => handleSectorClick(sector)}
@@ -349,7 +467,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
                   )}
                 </button>
 
-                {/* Segundo Nível: Submódulos (exibidos quando expandido) */}
                 {!isCollapsed && isSectorActive && sector.submodules && (
                   <div className="pl-4 pr-1 py-0.5 space-y-0.5 border-l-2 border-deep-teal/30 ml-3 my-0.5">
                     {sector.submodules.map((sub) => {
@@ -378,7 +495,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                           </div>
                           {sub.badge && (
                             <span className={`text-[9px] px-1.5 py-0.2 rounded-chip font-medium shrink-0 ${
-                              isSubActive ? 'bg-white/20 text-white' : 'bg-warm-mist/50 text-graphite'
+                              isSubActive ? 'bg-white/20 text-white' : 'bg-soft-paper border border-warm-mist text-graphite'
                             }`}>
                               {sub.badge}
                             </span>
@@ -391,40 +508,13 @@ export const Sidebar: React.FC<SidebarProps> = ({
               </div>
             );
           })}
-
-          {/* Acesso rápido aos projetos recentes (quando expandido) */}
-          {!isCollapsed && (
-            <div className="pt-3 pb-1">
-              <div className="px-3 py-1 text-[10px] font-medium text-graphite/80 uppercase tracking-wider">
-                Recentes
-              </div>
-              <div className="space-y-0.5 mt-0.5">
-                {recentItems.map((item) => (
-                  <button
-                    key={item.id}
-                    onClick={() => {
-                      onSelectSector(item.sector);
-                      onSelectModule(item.module, item.sector);
-                      if (onCloseMobile) onCloseMobile();
-                    }}
-                    className="w-full text-left px-3 py-1 rounded-inp text-[11px] text-graphite hover:text-ink hover:bg-soft-paper truncate block font-normal cursor-pointer"
-                    title={item.title}
-                  >
-                    {item.title}
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
         </div>
 
-        {/* Rodapé com Perfil do Usuário e Menu Flutuante */}
-        <div className={`border-t border-warm-mist/60 bg-soft-paper/60 ${isCollapsed ? 'p-2 flex justify-center' : 'p-3'}`}>
-          <UserProfileMenu
-            isCollapsed={isCollapsed}
-            onOpenSettings={onOpenSettings}
-            onOpenProfile={onOpenSettings}
-            onOpenCustomization={onOpenSettings}
+        {/* Rodapé da Sidebar */}
+        <div className="p-3 border-t border-warm-mist/60 shrink-0">
+          <UserProfileMenu 
+            isCollapsed={isCollapsed} 
+            onOpenSettings={onOpenSettings} 
           />
         </div>
       </aside>

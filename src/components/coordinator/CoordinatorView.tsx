@@ -5,7 +5,6 @@ import {
   Pause, 
   CheckCircle2, 
   Clock, 
-  AlertTriangle, 
   ArrowRight, 
   Layers, 
   Sparkles, 
@@ -14,80 +13,158 @@ import {
   Code2, 
   Megaphone, 
   Users, 
-  RefreshCw 
+  RefreshCw,
+  Send,
+  Sliders,
+  ChevronRight,
+  Activity
 } from 'lucide-react';
 import { INITIAL_SWARM_AGENTS } from '../../data/mockData';
 import { SwarmAgent } from '../../types';
 
 export const CoordinatorView: React.FC = () => {
-  const [agents, setAgents] = useState<SwarmAgent[]>(INITIAL_SWARM_AGENTS);
   const [isRunning, setIsRunning] = useState(true);
   const [objectiveInput, setObjectiveInput] = useState('');
+  const [selectedSectorFilter, setSelectedSectorFilter] = useState<'all' | 'creator' | 'editing' | 'business'>('all');
+
   const [activePlan, setActivePlan] = useState<{
     goal: string;
-    steps: { id: number; title: string; agent: string; status: 'completed' | 'in_progress' | 'pending'; output: string }[];
+    status: 'in_progress' | 'completed' | 'paused';
+    steps: { 
+      id: number; 
+      title: string; 
+      targetSector: string; 
+      agent: string; 
+      status: 'completed' | 'in_progress' | 'pending'; 
+      detail: string; 
+    }[];
   }>({
-    goal: 'Criar plataforma completa de e-commerce com design Apple San Francisco, funil no CRM e campanha de marketing integrada',
+    goal: 'Criar plataforma completa de e-commerce com design Apple, funil no CRM e campanha de marketing integrada',
+    status: 'in_progress',
     steps: [
-      { id: 1, title: 'Definir arquitetura visual e componentes UI', agent: 'Agente UI/UX Designer', status: 'completed', output: 'Tokens Parchment (#faf8f5) e tipografia SF Pro configurados.' },
-      { id: 2, title: 'Desenvolver catálogo e checkout no AI Studio', agent: 'Agente Full-Stack Coder', status: 'in_progress', output: 'Implementando 8 telas com integração Supabase e verificação de tipagem.' },
-      { id: 3, title: 'Executar testes de unidade e verificação de autocorreção', agent: 'Agente de Testes Autônomos', status: 'in_progress', output: 'Executando validações de lint e integridade de formulários.' },
-      { id: 4, title: 'Auditar conformidade e brechas no código', agent: 'Agente Hacker Ético', status: 'pending', output: 'Aguardando compilação do front-end para teste DAST/SAST.' },
-      { id: 5, title: 'Cadastrar leads de teste e sincronizar funil de vendas', agent: 'Agente Coordenador Global', status: 'pending', output: 'Alimentar CRM com 4 oportunidades qualificadas.' },
+      { 
+        id: 1, 
+        title: 'Definir arquitetura visual e tokens UI', 
+        targetSector: 'Creator', 
+        agent: 'Agente UI/UX', 
+        status: 'completed', 
+        detail: 'Tokens de design Apple SF Pro e paleta sóbria definidos na Memória Universal.' 
+      },
+      { 
+        id: 2, 
+        title: 'Desenvolver catálogo e checkout no AI Studio', 
+        targetSector: 'Creator', 
+        agent: 'Full-Stack Coder', 
+        status: 'in_progress', 
+        detail: 'Compilação de componentes React 19 e rotas de navegação.' 
+      },
+      { 
+        id: 3, 
+        title: 'Sincronizar oportunidades e funil comercial', 
+        targetSector: 'Business', 
+        agent: 'Agente CRM & Vendas', 
+        status: 'in_progress', 
+        detail: 'Mapeamento de 4 contas enterprise no pipeline de vendas.' 
+      },
+      { 
+        id: 4, 
+        title: 'Elaborar copies e campanha de divulgação', 
+        targetSector: 'Business', 
+        agent: 'Estrategista Marketing', 
+        status: 'pending', 
+        detail: 'Criação de posts para LinkedIn e anúncio institucional em vídeo.' 
+      },
+      { 
+        id: 5, 
+        title: 'Auditoria de segurança e testes autônomos', 
+        targetSector: 'Inteligência', 
+        agent: 'Hacker Ético', 
+        status: 'pending', 
+        detail: 'Verificação DAST e validação de permissões de acesso.' 
+      },
     ]
   });
 
-  const handleCreateObjective = () => {
+  const handleDispatchGoal = () => {
     if (!objectiveInput.trim()) return;
 
     setActivePlan({
-      goal: objectiveInput,
+      goal: objectiveInput.trim(),
+      status: 'in_progress',
       steps: [
-        { id: 1, title: `Decomposição e análise de viabilidade: ${objectiveInput.slice(0, 30)}...`, agent: 'Agente Coordenador Global', status: 'completed', output: 'Requisitos técnicos mapeados na Memória Universal.' },
-        { id: 2, title: 'Geração de código e estruturas modulares', agent: 'Agente Full-Stack Coder', status: 'in_progress', output: 'Arquitetura inicial em execução.' },
-        { id: 3, title: 'Verificação de segurança e testes autônomos', agent: 'Agente Hacker Ético', status: 'pending', output: 'Fila de análise configurada.' }
+        { 
+          id: 1, 
+          title: `Análise de viabilidade e arquitetura: ${objectiveInput.slice(0, 32)}...`, 
+          targetSector: 'Inteligência', 
+          agent: 'Coordenador Global', 
+          status: 'completed', 
+          detail: 'Requisitos técnicos mapeados e decompostos em tarefas modulares.' 
+        },
+        { 
+          id: 2, 
+          title: 'Geração de interfaces e código modular', 
+          targetSector: 'Creator', 
+          agent: 'Full-Stack Coder', 
+          status: 'in_progress', 
+          detail: 'Construção da aplicação no AI Studio com live preview.' 
+        },
+        { 
+          id: 3, 
+          title: 'Integração de comunicação e funil no CRM', 
+          targetSector: 'Business', 
+          agent: 'Agente CRM', 
+          status: 'pending', 
+          detail: 'Alinhamento com base de clientes e canais de contato.' 
+        }
       ]
     });
     setObjectiveInput('');
   };
 
+  const filteredSteps = activePlan.steps.filter(step => {
+    if (selectedSectorFilter === 'all') return true;
+    if (selectedSectorFilter === 'creator') return step.targetSector === 'Creator';
+    if (selectedSectorFilter === 'editing') return step.targetSector === 'Edição';
+    if (selectedSectorFilter === 'business') return step.targetSector === 'Business';
+    return true;
+  });
+
   return (
-    <div className="flex-1 flex flex-col h-full overflow-y-auto px-4 lg:px-8 py-6 space-y-6">
-      {/* Hero Coordinator Banner */}
-      <div className="bg-soft-paper border border-warm-mist rounded-card p-6 shadow-subtle flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div className="space-y-1">
+    <div className="flex-1 flex flex-col h-full overflow-hidden bg-parchment text-ink font-sans select-none">
+      {/* 1. Header Minimalista do Orquestrador (Apple Style) */}
+      <div className="px-6 sm:px-8 pt-6 pb-4 border-b border-warm-mist/60 bg-parchment/90 backdrop-blur-xs flex flex-col md:flex-row md:items-center justify-between gap-4 shrink-0">
+        <div>
           <div className="flex items-center gap-2">
-            <span className="w-2.5 h-2.5 rounded-full bg-emerald-600 animate-pulse" />
-            <h2 className="text-[18px] font-medium text-ink">
-              Agente Coordenador Global em Operação
-            </h2>
-            <span className="text-[11px] font-medium bg-deep-teal text-white px-2.5 py-0.5 rounded-chip">
-              Orquestrador
-            </span>
+            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+            <h1 className="text-[20px] font-medium text-ink flex items-center gap-2">
+              <BrainCircuit size={18} strokeWidth={2.5} className="text-deep-teal" />
+              <span>Coordenador de Inteligência Universal</span>
+            </h1>
           </div>
-          <p className="text-[13px] text-graphite max-w-2xl leading-relaxed">
-            Supervisiona a execução paralela do enxame de agentes especializados, resolve conflitos, verifica evidências e garante coerência de design e código em todos os módulos.
+          <p className="text-[12px] text-graphite mt-0.5">
+            Orquestração contínua e distribuição de tarefas entre setores, agentes e modelos
           </p>
         </div>
 
+        {/* Status e Controle */}
         <div className="flex items-center gap-2">
           <button
             onClick={() => setIsRunning(!isRunning)}
             className={`
-              flex items-center gap-1.5 px-4 py-2 rounded-inp text-[13px] font-medium transition-colors shadow-subtle
+              flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-[12px] font-medium transition-colors shadow-2xs cursor-pointer
               ${isRunning 
-                ? 'bg-ink text-parchment hover:bg-pure-black' 
+                ? 'bg-soft-paper border border-warm-mist text-ink hover:bg-parchment' 
                 : 'bg-deep-teal text-white hover:bg-deep-teal/90'}
             `}
           >
             {isRunning ? (
               <>
-                <Pause size={14} strokeWidth={2.75} />
-                <span>Pausar Enxame</span>
+                <Pause size={13} strokeWidth={2.5} />
+                <span>Pausar Coordenação</span>
               </>
             ) : (
               <>
-                <Play size={14} strokeWidth={2.75} />
+                <Play size={13} strokeWidth={2.5} />
                 <span>Retomar Autonomia</span>
               </>
             )}
@@ -95,150 +172,109 @@ export const CoordinatorView: React.FC = () => {
         </div>
       </div>
 
-      {/* Goal Dispatcher Field */}
-      <div className="bg-parchment border border-warm-mist rounded-inp p-3 shadow-subtle">
-        <label className="text-[11px] font-medium uppercase tracking-wider text-graphite block mb-1.5">
-          Atribuir Grande Meta ao Coordenador
-        </label>
-        <div className="flex gap-2">
-          <input
-            type="text"
-            value={objectiveInput}
-            onChange={(e) => setObjectiveInput(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && handleCreateObjective()}
-            placeholder="Ex: Criar portal corporativo com 6 telas, vídeo de apresentação e automação de onboarding..."
-            className="flex-1 bg-soft-paper border border-warm-mist rounded-inp px-3 py-2 text-[13px] text-ink placeholder:text-graphite outline-hidden focus:border-deep-teal"
-          />
-          <button
-            onClick={handleCreateObjective}
-            className="px-4 py-2 bg-deep-teal text-white text-[13px] font-medium rounded-inp hover:bg-deep-teal/90 flex items-center gap-1.5 shadow-subtle shrink-0"
-          >
-            <Sparkles size={14} strokeWidth={2.75} />
-            <span>Decompor & Delegar</span>
-          </button>
-        </div>
-      </div>
+      {/* 2. Conteúdo Rolável Principal */}
+      <div className="flex-1 overflow-y-auto px-6 sm:px-8 py-5 space-y-6 max-w-5xl mx-auto w-full">
+        {/* Campo Amplo de Atribuição de Metas ao Coordenador */}
+        <div className="bg-soft-paper border border-warm-mist rounded-2xl p-4 shadow-2xs space-y-3">
+          <label className="text-[12px] font-medium text-ink flex items-center gap-1.5">
+            <Sparkles size={14} className="text-deep-teal" />
+            <span>Atribuir meta ou projeto para orquestração automática:</span>
+          </label>
 
-      {/* Main Grid: Active Plan & Swarm Agent Status */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        {/* Active Plan & Dependencies (Left 7 cols) */}
-        <div className="lg:col-span-7 space-y-4">
-          <div className="flex items-center justify-between">
-            <h3 className="text-[14px] font-medium text-ink flex items-center gap-2">
-              <Workflow size={16} strokeWidth={2.75} className="text-deep-teal" />
-              <span>Plano Atual e Decomposição de Tarefas</span>
-            </h3>
-            <span className="text-[11px] text-graphite">5 etapas orquestradas</span>
+          <div className="flex flex-col sm:flex-row gap-2">
+            <input
+              type="text"
+              value={objectiveInput}
+              onChange={(e) => setObjectiveInput(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && handleDispatchGoal()}
+              placeholder="Ex: Criar portal corporativo com 6 telas, vídeo de apresentação e automação de onboarding..."
+              className="flex-1 bg-parchment border border-warm-mist rounded-xl px-3.5 py-2 text-[13px] text-ink placeholder:text-graphite outline-hidden focus:border-deep-teal transition-all"
+            />
+            <button
+              onClick={handleDispatchGoal}
+              disabled={!objectiveInput.trim()}
+              className="px-4 py-2 bg-ink hover:bg-pure-black text-parchment text-[12px] font-medium rounded-xl flex items-center justify-center gap-1.5 shadow-2xs shrink-0 cursor-pointer transition-all disabled:opacity-40"
+            >
+              <Workflow size={13} strokeWidth={2.5} />
+              <span>Decompor & Delegar</span>
+            </button>
           </div>
+        </div>
 
-          <div className="bg-soft-paper border border-warm-mist rounded-card p-4 shadow-subtle space-y-3">
-            <div className="text-[13px] font-medium text-ink pb-2 border-b border-warm-mist/60">
-              Objetivo: <span className="font-normal text-graphite">{activePlan.goal}</span>
+        {/* Linha do Tempo Visual de Execução da Meta Atual */}
+        <div className="bg-soft-paper border border-warm-mist rounded-2xl p-5 shadow-2xs space-y-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-warm-mist/60">
+            <div>
+              <span className="text-[11px] font-medium uppercase tracking-wider text-graphite block">Plano em Execução</span>
+              <h3 className="text-[15px] font-medium text-ink mt-0.5">{activePlan.goal}</h3>
             </div>
 
-            <div className="space-y-3 pt-1">
-              {activePlan.steps.map((step) => (
-                <div 
-                  key={step.id} 
-                  className="p-3 bg-parchment border border-warm-mist rounded-inp flex items-start justify-between gap-3"
+            {/* Filtros por Setor */}
+            <div className="flex items-center gap-1 text-[11px]">
+              {[
+                { id: 'all', label: 'Todos os Setores' },
+                { id: 'creator', label: 'Creator' },
+                { id: 'business', label: 'Business' },
+              ].map((f) => (
+                <button
+                  key={f.id}
+                  onClick={() => setSelectedSectorFilter(f.id as any)}
+                  className={`
+                    px-2.5 py-1 rounded-full font-medium transition-all cursor-pointer
+                    ${selectedSectorFilter === f.id ? 'bg-ink text-parchment' : 'text-graphite hover:text-ink'}
+                  `}
                 >
-                  <div className="space-y-1 min-w-0">
-                    <div className="flex items-center gap-2">
-                      <span className="w-5 h-5 rounded-full bg-soft-paper border border-warm-mist text-[11px] font-medium flex items-center justify-center text-ink shrink-0">
-                        {step.id}
-                      </span>
-                      <h4 className="text-[13px] font-medium text-ink truncate">
-                        {step.title}
-                      </h4>
-                    </div>
-                    <p className="text-[12px] text-graphite pl-7">
-                      {step.output}
-                    </p>
-                    <div className="pl-7 pt-1 flex items-center gap-2 text-[11px] text-deep-teal">
-                      <BrainCircuit size={12} strokeWidth={2.75} />
-                      <span>{step.agent}</span>
-                    </div>
-                  </div>
-
-                  <div className="shrink-0 pt-0.5">
-                    {step.status === 'completed' && (
-                      <span className="inline-flex items-center gap-1 text-[11px] text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-chip font-medium">
-                        <CheckCircle2 size={12} strokeWidth={2.75} />
-                        Concluído
-                      </span>
-                    )}
-                    {step.status === 'in_progress' && (
-                      <span className="inline-flex items-center gap-1 text-[11px] text-deep-teal bg-deep-teal/10 border border-deep-teal/20 px-2 py-0.5 rounded-chip font-medium">
-                        <RefreshCw size={12} strokeWidth={2.75} className="animate-spin" />
-                        Em execução
-                      </span>
-                    )}
-                    {step.status === 'pending' && (
-                      <span className="inline-flex items-center gap-1 text-[11px] text-graphite bg-warm-mist/30 px-2 py-0.5 rounded-chip">
-                        <Clock size={12} strokeWidth={2.75} />
-                        Pendente
-                      </span>
-                    )}
-                  </div>
-                </div>
+                  {f.label}
+                </button>
               ))}
             </div>
           </div>
-        </div>
 
-        {/* Swarm Agents Status (Right 5 cols) */}
-        <div className="lg:col-span-5 space-y-4">
-          <div className="flex items-center justify-between">
-            <h3 className="text-[14px] font-medium text-ink flex items-center gap-2">
-              <Layers size={16} strokeWidth={2.75} className="text-deep-teal" />
-              <span>Enxame de Agentes Especializados</span>
-            </h3>
-            <span className="text-[11px] text-graphite">Autônomos</span>
-          </div>
+          {/* Lista de Etapas com Indicadores Elegantes */}
+          <div className="space-y-3 pt-1">
+            {filteredSteps.map((step) => {
+              const isCompleted = step.status === 'completed';
+              const isInProgress = step.status === 'in_progress';
 
-          <div className="space-y-2.5">
-            {agents.map((ag) => (
-              <div 
-                key={ag.id}
-                className="p-3.5 bg-soft-paper border border-warm-mist rounded-card shadow-subtle space-y-2"
-              >
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h4 className="text-[13px] font-medium text-ink leading-tight">{ag.name}</h4>
-                    <span className="text-[11px] text-graphite leading-tight">{ag.role}</span>
+              return (
+                <div
+                  key={step.id}
+                  className="p-3.5 bg-parchment border border-warm-mist rounded-xl flex items-start justify-between gap-4 transition-all hover:border-deep-teal/40"
+                >
+                  <div className="flex items-start gap-3 min-w-0">
+                    {/* Número/Status */}
+                    <div className={`w-6 h-6 rounded-full flex items-center justify-center shrink-0 mt-0.5 text-[11px] font-medium ${
+                      isCompleted ? 'bg-emerald-100 text-emerald-800' :
+                      isInProgress ? 'bg-blue-100 text-blue-800 animate-pulse' :
+                      'bg-soft-paper border border-warm-mist text-graphite'
+                    }`}>
+                      {isCompleted ? <CheckCircle2 size={13} strokeWidth={2.5} /> : step.id}
+                    </div>
+
+                    {/* Conteúdo */}
+                    <div className="space-y-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <h4 className="text-[13px] font-medium text-ink truncate">{step.title}</h4>
+                        <span className="text-[10px] font-medium px-2 py-0.2 rounded-full bg-soft-paper border border-warm-mist text-graphite">
+                          Setor: {step.targetSector}
+                        </span>
+                      </div>
+                      <p className="text-[12px] text-graphite leading-relaxed">{step.detail}</p>
+                    </div>
                   </div>
 
-                  <span className={`
-                    text-[10px] px-2 py-0.5 rounded-chip font-medium
-                    ${ag.status === 'completed' ? 'bg-emerald-100 text-emerald-800' : ''}
-                    ${ag.status === 'working' ? 'bg-deep-teal text-white' : ''}
-                    ${ag.status === 'idle' ? 'bg-warm-mist/40 text-graphite' : ''}
-                  `}>
-                    {ag.status === 'completed' && 'Concluído'}
-                    {ag.status === 'working' && 'Trabalhando'}
-                    {ag.status === 'idle' && 'Aguardando'}
-                  </span>
-                </div>
-
-                <p className="text-[12px] text-ink/80 leading-snug">
-                  {ag.currentTask}
-                </p>
-
-                {/* Progress bar */}
-                <div className="space-y-1 pt-1">
-                  <div className="flex justify-between text-[10px] text-graphite">
-                    <span>Progresso da tarefa</span>
-                    <span>{ag.progress}%</span>
-                  </div>
-                  <div className="w-full bg-warm-mist/40 h-1.5 rounded-chip overflow-hidden">
-                    <div 
-                      className="bg-deep-teal h-full transition-all duration-300"
-                      style={{ width: `${ag.progress}%` }}
-                    />
+                  {/* Agente Responsável */}
+                  <div className="text-right shrink-0">
+                    <span className="text-[11px] font-medium text-deep-teal block">{step.agent}</span>
+                    <span className={`text-[10px] ${
+                      isCompleted ? 'text-emerald-700' : isInProgress ? 'text-blue-700' : 'text-graphite'
+                    }`}>
+                      {isCompleted ? 'Concluído' : isInProgress ? 'Em andamento' : 'Aguardando'}
+                    </span>
                   </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       </div>

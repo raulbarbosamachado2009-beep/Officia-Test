@@ -1,561 +1,588 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { 
   Film, 
-  Image as ImageIcon, 
   Sparkles, 
-  Send, 
-  Clock, 
   Play, 
   Pause, 
-  Square, 
-  SkipBack, 
-  SkipForward, 
-  Rewind, 
-  FastForward, 
+  RotateCcw, 
+  RotateCw, 
   Maximize2, 
   Scissors, 
-  Copy, 
-  Trash2, 
-  Cloud, 
-  MoreHorizontal, 
+  Plus, 
+  Share2, 
+  Download, 
+  Music, 
+  Type, 
   Sliders, 
   Search, 
   Layers, 
   ArrowLeft, 
-  RotateCcw, 
-  RotateCw, 
-  Wand2, 
-  Palette, 
-  Edit3, 
+  ChevronDown, 
+  Video, 
+  Mic, 
+  FolderPlus, 
   Volume2, 
+  VolumeX, 
+  Sparkle, 
+  ZoomIn, 
+  ZoomOut, 
+  Maximize, 
   Check, 
-  ChevronDown,
-  Download,
-  Filter,
-  Music,
-  Grid
+  X,
+  Undo2,
+  Redo2,
+  Captions,
+  FileVideo,
+  Radio
 } from 'lucide-react';
 
 interface VideoEditorViewProps {
+  projectTitle?: string;
+  onBackToProjects?: () => void;
   onSwitchToPhotoEditor?: () => void;
   onSwitchToMotionDesign?: () => void;
 }
 
 export const VideoEditorView: React.FC<VideoEditorViewProps> = ({
+  projectTitle = "Video Project",
+  onBackToProjects,
   onSwitchToPhotoEditor,
+  onSwitchToMotionDesign
 }) => {
-  // Toggle between the clean AI landing page and the professional NLE manual editor (Image 3)
-  const [isManualMode, setIsManualMode] = useState(false);
-  const [chatPrompt, setChatPrompt] = useState('');
+  // Estados do Player & Timeline
   const [isPlaying, setIsPlaying] = useState(false);
-  const [timecode, setTimecode] = useState('00:00:04:22');
-  const [activeToolTab, setActiveToolTab] = useState<'cut' | 'edit' | 'color' | 'sound'>('cut');
-  const [activeMediaTab, setActiveMediaTab] = useState<'media' | 'filters'>('media');
+  const [currentTimeSec, setCurrentTimeSec] = useState(2.08);
+  const totalDurationSec = 21.74;
+  const [aspectRatio, setAspectRatio] = useState<'16:9' | '9:16' | '1:1'>('16:9');
+  const [showAspectMenu, setShowAspectMenu] = useState(false);
+  const [isMuted, setIsMuted] = useState(false);
+  const [timelineZoom, setTimelineZoom] = useState(1);
+  const [showExportModal, setShowExportModal] = useState(false);
 
-  // Simulated VU Audio Meter Level animation
-  const [vuLevel, setVuLevel] = useState(65);
+  // Barra de ferramentas lateral esquerda (estilo Clipchamp / Imagem 2)
+  type SidebarTool = 'media' | 'record' | 'library' | 'templates' | 'text' | 'transitions';
+  const [activeTool, setActiveTool] = useState<SidebarTool>('transitions');
+  const [transitionSearch, setTransitionSearch] = useState('');
+  const [selectedTransition, setSelectedTransition] = useState<string>('Cross fade');
+
+  // Relógio do player para simular avanço suave da timeline
   useEffect(() => {
-    let interval: any;
+    let animFrame: number;
     if (isPlaying) {
-      interval = setInterval(() => {
-        setVuLevel(Math.floor(Math.random() * 40) + 50);
-      }, 120);
-    } else {
-      setVuLevel(15);
+      const interval = setInterval(() => {
+        setCurrentTimeSec((prev) => {
+          if (prev >= totalDurationSec) {
+            setIsPlaying(false);
+            return 0;
+          }
+          return Number((prev + 0.1).toFixed(2));
+        });
+      }, 100);
+      return () => clearInterval(interval);
     }
-    return () => clearInterval(interval);
   }, [isPlaying]);
 
-  // Recent video projects as requested in requirements
-  const recentProjects = [
-    {
-      id: 'proj-1',
-      title: 'My 2023 journey',
-      duration: '02:45',
-      resolution: '4K • 60fps',
-      lastEdited: 'Editado há 12 min',
-      thumbnail: 'https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?auto=format&fit=crop&w=600&q=80'
-    },
-    {
-      id: 'proj-2',
-      title: 'Campanha Nexus Health 4K',
-      duration: '00:58',
-      resolution: '4K • 60fps',
-      lastEdited: 'Editado ontem',
-      thumbnail: 'https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?auto=format&fit=crop&w=600&q=80'
-    },
-    {
-      id: 'proj-3',
-      title: 'Lumina Motion Design Teaser',
-      duration: '00:30',
-      resolution: '1080p • 60fps',
-      lastEdited: 'Editado há 3 dias',
-      thumbnail: 'https://images.unsplash.com/photo-1550745165-9bc0b252726f?auto=format&fit=crop&w=600&q=80'
-    },
-    {
-      id: 'proj-4',
-      title: 'Reels Produto Drop 01',
-      duration: '00:15',
-      resolution: '9:16 Vertical',
-      lastEdited: 'Editado há 5 dias',
-      thumbnail: 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&w=600&q=80'
-    }
+  // Formata segundos para MM:SS.SS
+  const formatTime = (sec: number) => {
+    const mins = Math.floor(sec / 60);
+    const remainingSecs = Math.floor(sec % 60);
+    const centiseconds = Math.floor((sec % 1) * 100);
+    return `${mins}:${remainingSecs.toString().padStart(2, '0')}.${centiseconds.toString().padStart(2, '0')}`;
+  };
+
+  const handleSkip5 = (forward: boolean) => {
+    setCurrentTimeSec((prev) => {
+      const next = forward ? prev + 5 : prev - 5;
+      return Math.max(0, Math.min(totalDurationSec, Number(next.toFixed(2))));
+    });
+  };
+
+  // Transições da imagem 2
+  const transitionsList = [
+    { id: 't1', name: 'Cross fade', category: 'Fades & blurs', previewColor: 'from-blue-600 to-indigo-700' },
+    { id: 't2', name: 'Cross blur', category: 'Fades & blurs', previewColor: 'from-indigo-600 to-purple-700' },
+    { id: 't3', name: 'Burn', category: 'Fades & blurs', previewColor: 'from-amber-600 to-red-700' },
+    { id: 't4', name: 'Fade through black', category: 'Fades & blurs', previewColor: 'from-neutral-900 to-black' },
+    { id: 't5', name: 'Fade through white', category: 'Fades & blurs', previewColor: 'from-neutral-300 to-white' },
+    { id: 't6', name: 'Horizontal banding', category: 'Fades & blurs', previewColor: 'from-purple-800 to-pink-700' },
+    { id: 't7', name: 'Tiles', category: 'Fades & blurs', previewColor: 'from-emerald-700 to-teal-800' },
+    { id: 't8', name: 'Wipe left', category: 'Wipes', previewColor: 'from-cyan-700 to-blue-800' },
+    { id: 't9', name: 'Wipe right', category: 'Wipes', previewColor: 'from-blue-800 to-purple-800' },
   ];
 
-  // Media Library clips for the manual editor (Image 3)
-  const mediaClips = [
-    { id: 'c1', name: 'IMG_8451.mov', duration: '12:04', thumb: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=300&q=80' },
-    { id: 'c2', name: 'IMG_9482.mov', duration: '07:56', thumb: 'https://images.unsplash.com/photo-1519681393784-d120267933ba?auto=format&fit=crop&w=300&q=80' },
-    { id: 'c3', name: 'IMG_3201.mov', duration: '24:37', thumb: 'https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?auto=format&fit=crop&w=300&q=80' },
-    { id: 'c4', name: 'IMG_4722.mov', duration: '15:49', thumb: 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=300&q=80' },
-    { id: 'c5', name: 'IMG_8451.mov', duration: '45:27', thumb: 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=300&q=80' },
-    { id: 'c6', name: 'IMG_9482.mov', duration: '27:12', thumb: 'https://images.unsplash.com/photo-1534447677768-be436bb09401?auto=format&fit=crop&w=300&q=80' },
-    { id: 'c7', name: 'IMG_3201.mov', duration: '15:54', thumb: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=300&q=80' },
-    { id: 'c8', name: 'IMG_4722.mov', duration: '32:22', thumb: 'https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?auto=format&fit=crop&w=300&q=80' },
-  ];
+  const filteredTransitions = transitionsList.filter(t => 
+    t.name.toLowerCase().includes(transitionSearch.toLowerCase())
+  );
 
-  /* =========================================================================
-     MANUAL VIDEO EDITOR (EXACT REPLICA OF IMAGE 3)
-     ========================================================================= */
-  if (isManualMode) {
-    return (
-      <div className="flex-1 flex flex-col h-full bg-[#121316] text-[#e5e7eb] font-sans overflow-hidden select-none">
-        {/* Top NLE Bar */}
-        <div className="h-11 bg-[#181a1f] border-b border-[#292c35] px-4 flex items-center justify-between z-20 shrink-0 text-[12px]">
-          <div className="flex items-center gap-3">
-            <button
-              onClick={() => setIsManualMode(false)}
-              className="p-1 hover:bg-[#252830] text-[#9ca3af] hover:text-white rounded-btn transition-colors flex items-center gap-1"
-              title="Voltar aos projetos"
-            >
-              <ArrowLeft size={14} strokeWidth={2.75} />
-            </button>
-
-            <span className="font-medium text-white text-[13px]">My 2023 journey</span>
-
-            <div className="hidden md:flex items-center gap-3.5 pl-4 text-[#9ca3af]">
-              <span className="hover:text-white cursor-pointer">File</span>
-              <span className="hover:text-white cursor-pointer">Edit</span>
-              <span className="hover:text-white cursor-pointer">Trim</span>
-              <span className="hover:text-white cursor-pointer">Clip</span>
-              <span className="hover:text-white cursor-pointer">Mark</span>
-              <span className="hover:text-white cursor-pointer">View</span>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-3">
-            <button className="flex items-center gap-1.5 text-[#9ca3af] hover:text-white">
-              <Cloud size={14} strokeWidth={2.5} />
-              <span className="hidden sm:inline text-[11px]">Cloud</span>
-            </button>
-            <button className="p-1 hover:bg-[#252830] text-[#9ca3af] hover:text-white rounded-btn">
-              <MoreHorizontal size={14} strokeWidth={2.75} />
-            </button>
-            <button className="px-3 py-1 rounded-btn bg-[#2563eb] text-white text-[12px] font-medium hover:bg-[#1d4ed8] shadow-xs transition-colors">
-              Exportar
-            </button>
-          </div>
-        </div>
-
-        {/* Subheader: Timeline Spec & Tools */}
-        <div className="h-9 bg-[#14151a] border-b border-[#24262e] px-4 flex items-center justify-between shrink-0 text-[11px]">
-          <div className="flex items-center gap-2 text-[#9ca3af]">
-            <Sliders size={13} strokeWidth={2.5} className="text-white" />
-            <span className="text-white font-medium">Timeline 1 - The best travel moments</span>
-            <span className="bg-[#1f2129] px-2 py-0.5 rounded text-[#9ca3af] font-mono">4k • 60 fps ▾</span>
-          </div>
-
-          <div className="flex items-center gap-2 text-[#9ca3af]">
-            <button className="p-1 hover:text-white"><Edit3 size={13} strokeWidth={2.5} /></button>
-            <button className="p-1 hover:text-white"><Wand2 size={13} strokeWidth={2.5} /></button>
-            <button className="p-1 hover:text-white"><Palette size={13} strokeWidth={2.5} /></button>
-          </div>
-        </div>
-
-        {/* Upper Workspace: Left Player, Right Media Library (Image 3) */}
-        <div className="h-[46%] grid grid-cols-1 lg:grid-cols-12 border-b border-[#292c35] overflow-hidden">
-          {/* Left Player (7 cols) */}
-          <div className="lg:col-span-7 flex flex-col h-full border-r border-[#292c35] bg-[#0c0d10]">
-            {/* 16:9 Scenic Video Screen */}
-            <div className="flex-1 relative flex items-center justify-center overflow-hidden">
-              <img
-                src="https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?auto=format&fit=crop&w=1200&q=80"
-                alt="Player Canvas Preview"
-                className="w-full h-full object-cover"
-              />
-              {/* Play overlay button if paused */}
-              {!isPlaying && (
-                <button
-                  onClick={() => setIsPlaying(true)}
-                  className="absolute w-12 h-12 rounded-full bg-black/60 backdrop-blur-xs text-white flex items-center justify-center hover:scale-105 transition-transform"
-                >
-                  <Play size={20} strokeWidth={2.75} className="ml-1" />
-                </button>
-              )}
-            </div>
-
-            {/* Playback Controls Bar (Image 3) */}
-            <div className="h-9 bg-[#16181f] border-t border-[#24262e] px-4 flex items-center justify-between text-[11px] text-[#9ca3af] shrink-0">
-              <div className="flex items-center gap-2">
-                <button className="hover:text-white"><Rewind size={13} strokeWidth={2.5} /></button>
-                <span className="font-mono text-white text-[12px]">{timecode}</span>
-                <button className="hover:text-white"><FastForward size={13} strokeWidth={2.5} /></button>
-              </div>
-
-              {/* Center transport */}
-              <div className="flex items-center gap-3 text-white">
-                <button className="hover:text-[#38bdf8]"><SkipBack size={13} strokeWidth={2.5} /></button>
-                <button onClick={() => setIsPlaying(false)} className="hover:text-[#38bdf8]"><Square size={11} strokeWidth={2.5} /></button>
-                <button onClick={() => setIsPlaying(!isPlaying)} className="hover:text-[#38bdf8]">
-                  {isPlaying ? <Pause size={13} strokeWidth={2.75} /> : <Play size={13} strokeWidth={2.75} />}
-                </button>
-                <button className="hover:text-[#38bdf8]"><SkipForward size={13} strokeWidth={2.5} /></button>
-              </div>
-
-              {/* Right view scale */}
-              <div className="flex items-center gap-3">
-                <span className="hover:text-white cursor-pointer">Fit to screen ▾</span>
-                <button className="hover:text-white"><Maximize2 size={13} strokeWidth={2.5} /></button>
-              </div>
-            </div>
-          </div>
-
-          {/* Right Media Library & Grid (5 cols) */}
-          <div className="lg:col-span-5 flex flex-col h-full bg-[#16171d]">
-            {/* Tab header */}
-            <div className="h-9 border-b border-[#24262e] px-3 flex items-center justify-between text-[11px] text-[#9ca3af] shrink-0">
-              <div className="flex items-center gap-3 font-medium">
-                <button
-                  onClick={() => setActiveMediaTab('filters')}
-                  className={`flex items-center gap-1 ${activeMediaTab === 'filters' ? 'text-[#eab308]' : 'hover:text-white'}`}
-                >
-                  <Filter size={11} strokeWidth={2.75} />
-                  <span>Filters</span>
-                </button>
-                <button
-                  onClick={() => setActiveMediaTab('media')}
-                  className={`flex items-center gap-1 ${activeMediaTab === 'media' ? 'text-white' : 'hover:text-white'}`}
-                >
-                  <span>Media</span>
-                </button>
-              </div>
-
-              <div className="flex items-center gap-2">
-                <button className="hover:text-white"><Grid size={12} strokeWidth={2.5} /></button>
-                <button className="hover:text-white"><Search size={12} strokeWidth={2.5} /></button>
-              </div>
-            </div>
-
-            {/* Media clips grid (Image 3) */}
-            <div className="flex-1 overflow-y-auto p-2.5 grid grid-cols-4 gap-2">
-              {mediaClips.map((clip) => (
-                <div
-                  key={clip.id}
-                  className="group relative rounded-md overflow-hidden bg-[#20222a] border border-[#2d303a] hover:border-[#38bdf8] cursor-pointer transition-all aspect-video flex flex-col justify-end"
-                >
-                  <img src={clip.thumb} alt={clip.name} className="absolute inset-0 w-full h-full object-cover opacity-80 group-hover:opacity-100" />
-                  
-                  {/* Top wave & duration */}
-                  <div className="absolute top-1 left-1 right-1 flex items-center justify-between text-[8px] text-white">
-                    <Music size={9} strokeWidth={2.5} />
-                    <span className="bg-black/60 px-1 rounded font-mono">{clip.duration}</span>
-                  </div>
-
-                  <div className="relative bg-gradient-to-t from-black/80 to-transparent p-1">
-                    <span className="text-[8px] text-white truncate block">{clip.name}</span>
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            {/* Media footer */}
-            <div className="h-7 border-t border-[#24262e] px-3 flex items-center justify-between text-[10px] text-[#9ca3af] bg-[#14151a] shrink-0">
-              <span>Markers</span>
-              <span>47 items • 14.65 Gb</span>
-              <span className="hover:text-white cursor-pointer">Select</span>
-            </div>
-          </div>
-        </div>
-
-        {/* Timeline Middle Actions Bar & VU Audio Meter (Image 3) */}
-        <div className="h-9 bg-[#191b22] border-b border-[#24262e] px-4 flex items-center justify-between text-[11px] text-[#9ca3af] shrink-0">
-          <div className="flex items-center gap-3">
-            <span className="text-[#eab308] font-medium cursor-pointer">Select Clip ▾</span>
-            <span className="hover:text-white cursor-pointer">Multicam</span>
-            <span className="hover:text-white cursor-pointer">Volume</span>
-            <span className="hover:text-white cursor-pointer">Animation</span>
-          </div>
-
-          <div className="flex items-center gap-4">
-            <div className="flex items-center gap-3">
-              <button className="hover:text-white" title="Split / Dividir"><Scissors size={13} strokeWidth={2.5} /></button>
-              <button className="hover:text-white" title="Mirror"><Copy size={13} strokeWidth={2.5} /></button>
-              <button className="hover:text-white" title="Delete"><Trash2 size={13} strokeWidth={2.5} /></button>
-            </div>
-
-            {/* Realtime dB VU Meter Bar as seen on the right in Image 3 */}
-            <div className="flex items-center gap-1.5 pl-3 border-l border-[#2e313b]">
-              <div className="w-24 h-2.5 bg-[#0f1014] rounded-full overflow-hidden p-0.5 flex items-center">
-                <div
-                  className="h-full rounded-full transition-all duration-100 bg-gradient-to-r from-emerald-500 via-amber-400 to-rose-500"
-                  style={{ width: `${vuLevel}%` }}
-                />
-              </div>
-              <span className="text-[9px] font-mono text-[#9ca3af]">-12 dB</span>
-            </div>
-          </div>
-        </div>
-
-        {/* Multi-Track Timeline Canvas (Exact Replica of Image 3) */}
-        <div className="flex-1 bg-[#121318] p-3 overflow-x-auto relative flex flex-col justify-start space-y-2">
-          {/* Seconds Ruler */}
-          <div className="h-5 flex items-end text-[10px] text-[#6b7280] font-mono border-b border-[#24262e] pb-1">
-            <span className="w-20">1s</span>
-            <span className="w-20">2s</span>
-            <span className="w-20">3s</span>
-            <span className="w-20">4s</span>
-            <span className="w-20">5s</span>
-            <span className="w-20">6s</span>
-            <span className="w-20">7s</span>
-            <span className="w-20">8s</span>
-          </div>
-
-          {/* Draggable Playhead vertical white line at 4s marker */}
-          <div className="absolute top-2 bottom-0 left-[34%] w-0.5 bg-white z-30 pointer-events-none">
-            <div className="w-3 h-3.5 -ml-1.5 bg-white rounded-t text-[8px] text-black font-bold flex items-center justify-center">
-              4s
-            </div>
-          </div>
-
-          {/* Track 1: Effects Bar (Purple clips in Image 3) */}
-          <div className="h-7 w-full flex items-center gap-2 pl-44">
-            <div className="h-full bg-[#7c3aed] text-white text-[10px] font-medium px-2.5 rounded flex items-center gap-1 w-64 shadow-xs">
-              <Sparkles size={11} strokeWidth={2.5} />
-              <span>Batch color correction</span>
-            </div>
-            <div className="h-full bg-[#7c3aed] text-white text-[10px] font-medium px-2.5 rounded flex items-center gap-1 w-44 shadow-xs">
-              <Sparkles size={11} strokeWidth={2.5} />
-              <span>Batch color correction</span>
-            </div>
-          </div>
-
-          {/* Track 2: Video Clips (Active clip with bright yellow outline as in Image 3) */}
-          <div className="h-12 w-full flex items-center gap-1.5 pl-6">
-            <div className="h-full w-28 bg-[#1e2028] border border-[#2f3340] rounded overflow-hidden flex items-center px-2 text-[10px] text-white">
-              <span>Fields of Switzerl...</span>
-            </div>
-            <div className="h-full w-32 bg-[#1e2028] border border-[#2f3340] rounded overflow-hidden flex items-center px-2 text-[10px] text-white">
-              <span>Fields of Switzerl...</span>
-            </div>
-            {/* The Active Highlighted Clip (Yellow Border with resize handles) */}
-            <div className="h-full w-48 bg-[#1e3a8a]/70 border-2 border-[#eab308] rounded relative flex items-center px-2 text-[10px] text-white font-medium shadow-md">
-              <div className="w-1.5 h-6 bg-[#eab308] rounded-full absolute left-1" />
-              <span className="pl-2">Fields of Switzerland</span>
-              <div className="w-1.5 h-6 bg-[#eab308] rounded-full absolute right-1" />
-            </div>
-            <div className="h-full w-36 bg-[#1e2028] border border-[#2f3340] rounded overflow-hidden flex items-center px-2 text-[10px] text-white">
-              <span>Actions with...</span>
-            </div>
-          </div>
-
-          {/* Track 3: Audio Clips (Teal voiceover waves in Image 3) */}
-          <div className="h-8 w-full flex items-center gap-2 pl-24">
-            <div className="h-full bg-[#0d9488]/80 border border-[#14b8a6]/40 rounded px-2 flex items-center gap-1.5 text-[10px] text-white w-32">
-              <Music size={11} strokeWidth={2.5} />
-              <span>Voiceover 2</span>
-            </div>
-            <div className="h-full bg-[#0d9488]/80 border border-[#14b8a6]/40 rounded px-2 flex items-center gap-1.5 text-[10px] text-white w-40">
-              <Music size={11} strokeWidth={2.5} />
-              <span>Sounds of water</span>
-            </div>
-          </div>
-        </div>
-
-        {/* Bottom Tools & History Bar (Image 3) */}
-        <div className="h-10 bg-[#16171d] border-t border-[#24262e] px-4 flex items-center justify-between text-[11px] text-[#9ca3af] shrink-0">
-          <div className="flex items-center gap-3">
-            <button onClick={() => setIsManualMode(false)} className="hover:text-white" title="Início">
-              <Film size={14} strokeWidth={2.5} />
-            </button>
-            <button className="hover:text-white"><Sliders size={14} strokeWidth={2.5} /></button>
-          </div>
-
-          {/* Center Tabs: Cut, Edit, Color, Sound */}
-          <div className="flex items-center gap-6">
-            <button
-              onClick={() => setActiveToolTab('cut')}
-              className={`flex items-center gap-1 pb-1 transition-all ${activeToolTab === 'cut' ? 'text-white border-b-2 border-[#eab308] font-medium' : 'hover:text-white'}`}
-            >
-              <Scissors size={12} strokeWidth={2.5} />
-              <span>Cut</span>
-            </button>
-            <button
-              onClick={() => setActiveToolTab('edit')}
-              className={`flex items-center gap-1 pb-1 transition-all ${activeToolTab === 'edit' ? 'text-white border-b-2 border-[#eab308] font-medium' : 'hover:text-white'}`}
-            >
-              <Edit3 size={12} strokeWidth={2.5} />
-              <span>Edit</span>
-            </button>
-            <button
-              onClick={() => setActiveToolTab('color')}
-              className={`flex items-center gap-1 pb-1 transition-all ${activeToolTab === 'color' ? 'text-white border-b-2 border-[#eab308] font-medium' : 'hover:text-white'}`}
-            >
-              <Palette size={12} strokeWidth={2.5} />
-              <span>Color</span>
-            </button>
-            <button
-              onClick={() => setActiveToolTab('sound')}
-              className={`flex items-center gap-1 pb-1 transition-all ${activeToolTab === 'sound' ? 'text-white border-b-2 border-[#eab308] font-medium' : 'hover:text-white'}`}
-            >
-              <Volume2 size={12} strokeWidth={2.5} />
-              <span>Sound</span>
-            </button>
-          </div>
-
-          {/* Right undo / redo */}
-          <div className="flex items-center gap-3">
-            <span className="hover:text-white cursor-pointer">History ▾</span>
-            <button className="hover:text-white"><RotateCcw size={13} strokeWidth={2.5} /></button>
-            <button className="hover:text-white"><RotateCw size={13} strokeWidth={2.5} /></button>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  /* =========================================================================
-     CLEAN AI VIDEO EDITOR LANDING PAGE (AS REQUESTED BY USER)
-     Chat + 2 Manual Action Buttons + Campo de Projetos Recentes
-     ========================================================================= */
   return (
-    <div className="flex-1 flex flex-col h-full bg-parchment font-sans overflow-y-auto px-4 lg:px-8 py-8 space-y-8 select-none">
-      {/* Hero Title */}
-      <div className="text-center space-y-2 max-w-2xl mx-auto">
-        <span className="text-[11px] font-medium tracking-wider uppercase text-deep-teal bg-deep-teal/10 px-3 py-1 rounded-chip">
-          Editor de Vídeo & Imagens
-        </span>
-        <h1 className="text-[32px] sm:text-[36px] font-medium text-ink tracking-tight">
-          Tudo com IA
-        </h1>
-        <p className="text-[14px] text-graphite leading-relaxed">
-          Crie e altere seus vídeos por instruções em linguagem natural ou abra a suíte de edição manual de alta precisão.
-        </p>
-      </div>
-
-      {/* Central AI Chat Input */}
-      <div className="max-w-2xl mx-auto w-full bg-soft-paper border border-warm-mist rounded-[24px] p-3 shadow-subtle focus-within:ring-2 focus-within:ring-deep-teal/30 focus-within:border-deep-teal transition-all">
-        <textarea
-          rows={2}
-          value={chatPrompt}
-          onChange={(e) => setChatPrompt(e.target.value)}
-          placeholder="Descreva a edição de vídeo que deseja fazer com IA (cortar silêncios, gerar legendas, efeitos)..."
-          className="w-full bg-transparent resize-none outline-hidden text-[14px] text-ink placeholder:text-graphite leading-relaxed px-2 pt-1 font-sans"
-        />
-
-        <div className="flex items-center justify-between pt-2 px-1 border-t border-warm-mist/50">
-          <div className="flex items-center gap-1.5 text-graphite">
-            <button className="p-1.5 hover:text-ink hover:bg-parchment rounded-btn transition-colors" title="Adicionar arquivo de vídeo">
-              <Film size={15} strokeWidth={2.75} />
+    <div className="flex-1 flex flex-col h-full bg-[#f9fafb] text-[#111827] font-sans overflow-hidden select-none">
+      {/* 1. Barra Superior Principal (Estilo Imagem 2 - Clipchamp / Apple Refinada) */}
+      <div className="h-13 bg-white border-b border-gray-200 px-3 sm:px-5 flex items-center justify-between shrink-0 z-30 shadow-2xs">
+        {/* Esquerda: Voltar / Título do Projeto */}
+        <div className="flex items-center gap-3">
+          {onBackToProjects && (
+            <button
+              onClick={onBackToProjects}
+              className="p-1.5 hover:bg-gray-100 text-gray-500 hover:text-gray-900 rounded-lg transition-colors cursor-pointer"
+              title="Voltar aos projetos de vídeo"
+            >
+              <ArrowLeft size={16} strokeWidth={2.5} />
             </button>
-            <span className="text-[11px]">Suporta até 4K UHD</span>
+          )}
+
+          <div className="flex items-center gap-2">
+            <div className="w-7 h-7 rounded-lg bg-gradient-to-tr from-purple-600 to-indigo-600 flex items-center justify-center text-white shadow-xs">
+              <Film size={15} strokeWidth={2.5} />
+            </div>
+            <div className="flex items-center gap-1.5">
+              <span className="font-medium text-[14px] text-gray-900">{projectTitle}</span>
+              <ChevronDown size={13} className="text-gray-400" />
+            </div>
           </div>
+        </div>
+
+        {/* Centro: Controles de Proporção (Size), CC, Mudo */}
+        <div className="flex items-center gap-2">
+          {/* Seletor de Aspect Ratio (Size) */}
+          <div className="relative">
+            <button
+              onClick={() => setShowAspectMenu(!showAspectMenu)}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gray-50 border border-gray-200 hover:bg-gray-100 text-[12px] font-medium text-gray-700 transition-colors cursor-pointer"
+            >
+              <span>Size: {aspectRatio}</span>
+              <ChevronDown size={13} className="text-gray-400" />
+            </button>
+
+            {showAspectMenu && (
+              <div className="absolute top-9 left-0 w-36 bg-white border border-gray-200 rounded-xl shadow-lg p-1.5 z-50 text-[12px]">
+                {(['16:9', '9:16', '1:1'] as const).map((ratio) => (
+                  <button
+                    key={ratio}
+                    onClick={() => {
+                      setAspectRatio(ratio);
+                      setShowAspectMenu(false);
+                    }}
+                    className={`w-full text-left px-2.5 py-1.5 rounded-lg transition-colors cursor-pointer flex items-center justify-between ${
+                      aspectRatio === ratio ? 'bg-purple-50 text-purple-700 font-medium' : 'text-gray-700 hover:bg-gray-50'
+                    }`}
+                  >
+                    <span>{ratio} {ratio === '16:9' ? 'Horizontal' : ratio === '9:16' ? 'Reels / Shorts' : 'Quadrado'}</span>
+                    {aspectRatio === ratio && <Check size={12} strokeWidth={2.5} />}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Legendas Automáticas */}
+          <button
+            className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-gray-50 border border-gray-200 hover:bg-gray-100 text-[12px] font-medium text-gray-700 transition-colors cursor-pointer"
+            title="Legendas automáticas por IA"
+          >
+            <Captions size={14} strokeWidth={2.2} />
+            <span className="hidden sm:inline">CC</span>
+          </button>
+
+          {/* Mute toggle */}
+          <button
+            onClick={() => setIsMuted(!isMuted)}
+            className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-500 hover:text-gray-800 transition-colors cursor-pointer"
+            title={isMuted ? "Ativar som" : "Desativar som"}
+          >
+            {isMuted ? <VolumeX size={16} strokeWidth={2.2} /> : <Volume2 size={16} strokeWidth={2.2} />}
+          </button>
+        </div>
+
+        {/* Direita: Compartilhar & Exportar */}
+        <div className="flex items-center gap-2">
+          <button className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-gray-700 hover:bg-gray-100 text-[12px] font-medium transition-colors cursor-pointer">
+            <Share2 size={14} strokeWidth={2.2} />
+            <span>Compartilhar</span>
+          </button>
 
           <button
-            onClick={() => {
-              if (chatPrompt.trim()) {
-                setIsManualMode(true);
-              }
-            }}
-            className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-chip bg-ink hover:bg-pure-black text-parchment text-[12px] font-medium shadow-subtle transition-colors"
+            onClick={() => setShowExportModal(true)}
+            className="flex items-center gap-1.5 px-4 py-1.5 rounded-full bg-purple-600 hover:bg-purple-700 text-white text-[12px] font-medium shadow-xs transition-colors cursor-pointer"
           >
-            <Sparkles size={13} strokeWidth={2.75} />
-            <span>Criar com IA</span>
+            <Download size={13} strokeWidth={2.5} />
+            <span>Exportar</span>
           </button>
         </div>
       </div>
 
-      {/* Two Prominent Action Buttons as specified */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-2xl mx-auto w-full">
-        <button
-          onClick={() => setIsManualMode(true)}
-          className="p-5 rounded-card bg-soft-paper border border-warm-mist hover:border-deep-teal hover:shadow-subtle transition-all flex items-center justify-between group text-left cursor-pointer"
-        >
-          <div className="flex items-center gap-4">
-            <div className="w-11 h-11 rounded-inp bg-deep-teal text-white flex items-center justify-center shadow-subtle group-hover:scale-105 transition-transform">
-              <Film size={22} strokeWidth={2.75} />
-            </div>
-            <div>
-              <h3 className="text-[16px] font-medium text-ink group-hover:text-deep-teal transition-colors">
-                Editar vídeo manualmente
-              </h3>
-              <p className="text-[12px] text-graphite mt-0.5">
-                Timeline multifaixa, corte 4K, correção de cor e áudio
-              </p>
-            </div>
-          </div>
-        </button>
-
-        <button
-          onClick={onSwitchToPhotoEditor}
-          className="p-5 rounded-card bg-soft-paper border border-warm-mist hover:border-deep-teal hover:shadow-subtle transition-all flex items-center justify-between group text-left cursor-pointer"
-        >
-          <div className="flex items-center gap-4">
-            <div className="w-11 h-11 rounded-inp bg-ink text-parchment flex items-center justify-center shadow-subtle group-hover:scale-105 transition-transform">
-              <ImageIcon size={22} strokeWidth={2.75} />
-            </div>
-            <div>
-              <h3 className="text-[16px] font-medium text-ink group-hover:text-deep-teal transition-colors">
-                Editar foto manualmente
-              </h3>
-              <p className="text-[12px] text-graphite mt-0.5">
-                Ajustes de cores, recorte e remoção de fundo com IA
-              </p>
-            </div>
-          </div>
-        </button>
-      </div>
-
-      {/* Recent Projects Section - Exactly as specified by user */}
-      <div className="max-w-4xl mx-auto w-full space-y-3 pt-2">
-        <div className="flex items-center justify-between">
-          <h2 className="text-[16px] font-medium text-ink flex items-center gap-2">
-            <Clock size={16} strokeWidth={2.75} className="text-deep-teal" />
-            <span>Projetos Recentes</span>
-          </h2>
-          <span className="text-[12px] text-graphite">{recentProjects.length} projetos salvos</span>
+      {/* 2. Área Central: Split Horizontal (Barra lateral de ferramentas + Painel lateral + Preview e Timeline) */}
+      <div className="flex-1 flex overflow-hidden">
+        {/* 2.1 Coluna Estreita de Ícones de Ferramentas (Imagem 2) */}
+        <div className="w-18 bg-white border-r border-gray-200 flex flex-col items-center py-3 gap-1 shrink-0 z-20">
+          {[
+            { id: 'media', label: 'My media', icon: FolderPlus },
+            { id: 'record', label: 'Record & create', icon: Video },
+            { id: 'library', label: 'Content library', icon: Layers },
+            { id: 'templates', label: 'Templates', icon: Sparkles },
+            { id: 'text', label: 'Text', icon: Type },
+            { id: 'transitions', label: 'Transitions', icon: Sliders },
+          ].map((tool) => {
+            const Icon = tool.icon;
+            const isActive = activeTool === tool.id;
+            return (
+              <button
+                key={tool.id}
+                onClick={() => setActiveTool(tool.id as SidebarTool)}
+                className={`
+                  w-15 py-2.5 px-1 rounded-xl flex flex-col items-center justify-center text-center transition-all cursor-pointer relative group
+                  ${isActive ? 'text-purple-700 font-medium' : 'text-gray-500 hover:text-gray-800 hover:bg-gray-50'}
+                `}
+              >
+                {/* Linha vertical roxa indicadora de aba ativa */}
+                {isActive && (
+                  <div className="absolute left-0 top-1.5 bottom-1.5 w-1 bg-purple-600 rounded-r-md" />
+                )}
+                <Icon size={18} strokeWidth={isActive ? 2.5 : 2} className="mb-1" />
+                <span className="text-[10px] leading-tight text-center break-words">{tool.label}</span>
+              </button>
+            );
+          })}
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3.5">
-          {recentProjects.map((proj) => (
-            <div
-              key={proj.id}
-              onClick={() => setIsManualMode(true)}
-              className="group bg-soft-paper border border-warm-mist rounded-card overflow-hidden hover:border-deep-teal transition-all shadow-subtle cursor-pointer flex flex-col justify-between"
-            >
-              <div className="h-32 w-full overflow-hidden relative bg-warm-mist/30">
-                <img
-                  src={proj.thumbnail}
-                  alt={proj.title}
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                />
-                <div className="absolute top-2 right-2 bg-black/70 backdrop-blur-xs text-white text-[10px] font-mono px-2 py-0.5 rounded-chip">
-                  {proj.duration}
+        {/* 2.2 Painel Lateral Contextual da Ferramenta Selecionada (Imagem 2) */}
+        <div className="w-72 sm:w-80 bg-white border-r border-gray-200 flex flex-col h-full overflow-hidden shrink-0">
+          {/* Header da Ferramenta */}
+          <div className="p-4 border-b border-gray-100 flex items-center justify-between">
+            <h3 className="font-medium text-[15px] text-gray-900 capitalize">
+              {activeTool === 'transitions' ? 'Transições' : activeTool === 'media' ? 'Minhas Mídias' : activeTool}
+            </h3>
+            <span className="text-[11px] text-gray-400">Arraste para a timeline</span>
+          </div>
+
+          {/* Conteúdo Contextual */}
+          <div className="flex-1 overflow-y-auto p-4 space-y-4">
+            {activeTool === 'transitions' && (
+              <>
+                {/* Busca de Transições */}
+                <div className="relative">
+                  <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                  <input
+                    type="text"
+                    value={transitionSearch}
+                    onChange={(e) => setTransitionSearch(e.target.value)}
+                    placeholder="Search transitions..."
+                    className="w-full pl-9 pr-3 py-1.5 rounded-lg bg-gray-50 border border-gray-200 text-[12px] text-gray-800 placeholder:text-gray-400 outline-hidden focus:border-purple-600 focus:bg-white transition-all"
+                  />
+                </div>
+
+                {/* Banner de instrução de arrastar */}
+                <div className="p-3 bg-purple-50/60 border border-purple-200/60 rounded-xl flex items-center gap-3">
+                  <div className="w-9 h-9 rounded-lg bg-purple-600 text-white flex items-center justify-center shrink-0 shadow-xs">
+                    <Sliders size={16} strokeWidth={2.5} />
+                  </div>
+                  <div className="text-[11px] text-purple-900 leading-snug">
+                    <span className="font-medium block">Adicionar transição</span>
+                    Arraste uma transição entre dois clipes na linha do tempo.
+                  </div>
+                </div>
+
+                {/* Seção Fades & Blurs */}
+                <div className="space-y-2 pt-1">
+                  <span className="text-[12px] font-medium text-gray-700 block">Fades & blurs</span>
+                  <div className="grid grid-cols-2 gap-2">
+                    {filteredTransitions.map((t) => (
+                      <div
+                        key={t.id}
+                        onClick={() => setSelectedTransition(t.name)}
+                        className={`group relative rounded-xl overflow-hidden border p-2 cursor-pointer transition-all ${
+                          selectedTransition === t.name 
+                            ? 'border-purple-600 ring-2 ring-purple-600/20 bg-purple-50/20' 
+                            : 'border-gray-200 hover:border-gray-400 bg-white'
+                        }`}
+                      >
+                        <div className={`h-16 rounded-lg bg-gradient-to-br ${t.previewColor} flex items-center justify-center shadow-inner relative overflow-hidden mb-1.5`}>
+                          <span className="text-[10px] text-white/90 font-medium">{t.name}</span>
+                        </div>
+                        <span className="text-[11px] font-medium text-gray-800 truncate block text-center">
+                          {t.name}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </>
+            )}
+
+            {activeTool === 'media' && (
+              <div className="space-y-3">
+                <button className="w-full py-4 border-2 border-dashed border-gray-200 hover:border-purple-600 rounded-xl flex flex-col items-center justify-center text-center cursor-pointer transition-colors bg-gray-50/50">
+                  <Plus size={20} className="text-purple-600 mb-1" />
+                  <span className="text-[12px] font-medium text-gray-800">Fazer upload de mídia</span>
+                  <span className="text-[10px] text-gray-500">Vídeos MP4, fotos e áudios</span>
+                </button>
+              </div>
+            )}
+
+            {activeTool !== 'transitions' && activeTool !== 'media' && (
+              <div className="py-8 text-center text-[12px] text-gray-400">
+                Selecione as opções disponíveis para {activeTool}
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* 2.3 Área Principal de Trabalho: Player Central + Timeline Inferior */}
+        <div className="flex-1 flex flex-col h-full bg-[#f3f4f6] overflow-hidden">
+          {/* Top Preview Canvas (Proporcional e Limpo) */}
+          <div className="flex-1 flex flex-col items-center justify-center p-4 relative overflow-hidden">
+            {/* Controles de Desfazer/Refazer no topo esquerdo do Preview */}
+            <div className="absolute top-4 left-4 flex items-center gap-1 z-10 bg-white/90 backdrop-blur-xs border border-gray-200 rounded-lg p-1 shadow-xs">
+              <button className="p-1 hover:bg-gray-100 text-gray-600 rounded cursor-pointer" title="Desfazer">
+                <Undo2 size={14} />
+              </button>
+              <button className="p-1 hover:bg-gray-100 text-gray-600 rounded cursor-pointer" title="Refazer">
+                <Redo2 size={14} />
+              </button>
+            </div>
+
+            {/* Tela de Vídeo com Proporção Controlada */}
+            <div className={`relative bg-black rounded-2xl shadow-xl overflow-hidden border border-gray-800 transition-all ${
+              aspectRatio === '16:9' ? 'w-full max-w-3xl aspect-video' :
+              aspectRatio === '9:16' ? 'h-full max-h-[360px] aspect-[9/16]' :
+              'w-full max-w-md aspect-square'
+            }`}>
+              {/* Imagem/Frame de Vídeo Real da Linha do Tempo */}
+              <img
+                src="https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?auto=format&fit=crop&w=1200&q=80"
+                alt="Video Preview"
+                className="w-full h-full object-cover"
+              />
+
+              {/* Linhas de scan ou efeito de transição sutil caso selecionado */}
+              <div className="absolute inset-0 bg-black/10 pointer-events-none" />
+
+              {/* Botão de Tela Cheia no canto do player */}
+              <button className="absolute bottom-3 right-3 p-1.5 rounded-lg bg-black/60 text-white hover:bg-black/80 transition-colors cursor-pointer">
+                <Maximize2 size={14} />
+              </button>
+            </div>
+          </div>
+
+          {/* 3. Barra de Transporte & Controles de Reprodução (Imagem 2) */}
+          <div className="h-12 bg-white border-t border-b border-gray-200 px-4 sm:px-6 flex items-center justify-between shrink-0 z-20">
+            {/* Esquerda: Ferramentas de corte e IA */}
+            <div className="flex items-center gap-3">
+              <button 
+                className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-purple-700 bg-purple-50 hover:bg-purple-100 text-[12px] font-medium transition-colors cursor-pointer"
+                title="Corte inteligente por IA"
+              >
+                <Sparkles size={14} strokeWidth={2.2} />
+                <span className="hidden sm:inline">IA Auto-corte</span>
+              </button>
+
+              <button 
+                className="p-1.5 rounded-lg text-gray-600 hover:text-gray-900 hover:bg-gray-100 transition-colors cursor-pointer"
+                title="Dividir clipe no cursor (Split)"
+              >
+                <Scissors size={15} strokeWidth={2.2} />
+              </button>
+            </div>
+
+            {/* Centro: Transporte (Rewind 5s, Play/Pause, Forward 5s, Timecode) */}
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => setCurrentTimeSec(0)}
+                className="p-1.5 text-gray-500 hover:text-gray-900 cursor-pointer"
+                title="Ir para o início"
+              >
+                <RotateCcw size={14} />
+              </button>
+
+              <button
+                onClick={() => handleSkip5(false)}
+                className="px-2 py-1 text-[11px] font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded cursor-pointer"
+                title="Voltar 5 segundos"
+              >
+                -5s
+              </button>
+
+              {/* Botão Play/Pause circular preto destacado */}
+              <button
+                onClick={() => setIsPlaying(!isPlaying)}
+                className="w-9 h-9 rounded-full bg-gray-900 text-white flex items-center justify-center hover:bg-black hover:scale-105 active:scale-95 transition-all shadow-sm cursor-pointer"
+              >
+                {isPlaying ? <Pause size={15} strokeWidth={2.5} /> : <Play size={15} strokeWidth={2.5} className="ml-0.5" />}
+              </button>
+
+              <button
+                onClick={() => handleSkip5(true)}
+                className="px-2 py-1 text-[11px] font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded cursor-pointer"
+                title="Avançar 5 segundos"
+              >
+                +5s
+              </button>
+
+              {/* Timecode Atual / Total */}
+              <span className="text-[12px] font-mono font-medium text-gray-700 pl-2">
+                {formatTime(currentTimeSec)} <span className="text-gray-400">/ {formatTime(totalDurationSec)}</span>
+              </span>
+            </div>
+
+            {/* Direita: Controles de Zoom da Linha do Tempo */}
+            <div className="flex items-center gap-1">
+              <button 
+                onClick={() => setTimelineZoom(prev => Math.max(0.5, prev - 0.25))}
+                className="p-1 text-gray-500 hover:text-gray-900 cursor-pointer"
+                title="Zoom Out"
+              >
+                <ZoomOut size={15} />
+              </button>
+              <button 
+                onClick={() => setTimelineZoom(prev => Math.min(2, prev + 0.25))}
+                className="p-1 text-gray-500 hover:text-gray-900 cursor-pointer"
+                title="Zoom In"
+              >
+                <ZoomIn size={15} />
+              </button>
+              <button 
+                onClick={() => setTimelineZoom(1)}
+                className="p-1 text-gray-500 hover:text-gray-900 cursor-pointer"
+                title="Ajustar à tela"
+              >
+                <Maximize size={14} />
+              </button>
+            </div>
+          </div>
+
+          {/* 4. Linha do Tempo Multifaixa (Timeline - Imagem 2) */}
+          <div className="h-48 sm:h-56 bg-white flex flex-col overflow-x-auto relative">
+            {/* Régua de Tempo */}
+            <div className="h-7 border-b border-gray-200 px-4 flex items-center text-[10px] text-gray-400 font-mono shrink-0 justify-between select-none bg-gray-50/60">
+              <span>0:00</span>
+              <span>0:05</span>
+              <span>0:10</span>
+              <span>0:15</span>
+              <span>0:20</span>
+              <span>0:25</span>
+            </div>
+
+            {/* Faixas da Linha do Tempo com Rolagem e Playhead */}
+            <div className="flex-1 p-3 space-y-2 relative min-w-[700px]">
+              {/* Playhead vertical móvel */}
+              <div 
+                className="absolute top-0 bottom-0 w-[2px] bg-gray-900 z-30 pointer-events-none transition-all duration-100"
+                style={{ left: `${Math.min(95, (currentTimeSec / totalDurationSec) * 90 + 3)}%` }}
+              >
+                <div className="w-3.5 h-3.5 rounded-full bg-gray-900 -translate-x-[6px] -translate-y-1 shadow-xs" />
+              </div>
+
+              {/* Botão Nova Coleção Flutuante */}
+              <div className="flex justify-end pb-1">
+                <button className="px-2.5 py-0.5 rounded-full bg-purple-100 hover:bg-purple-200 text-purple-700 text-[10px] font-medium transition-colors cursor-pointer flex items-center gap-1">
+                  <span>T</span>
+                  <span>NOVA COLEÇÃO</span>
+                </button>
+              </div>
+
+              {/* Faixa 1: Clipes de Vídeo em Miniatura com Transição Entre Eles */}
+              <div className="h-14 bg-gray-100 border border-gray-200 rounded-xl flex items-center overflow-hidden p-1 gap-1 relative">
+                {/* Clipe 1 */}
+                <div className="flex-1 h-full rounded-lg bg-gray-800 overflow-hidden relative group cursor-pointer border border-transparent hover:border-purple-600">
+                  <img
+                    src="https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=300&q=80"
+                    alt="Clip 1"
+                    className="w-full h-full object-cover opacity-85"
+                  />
+                  <span className="absolute bottom-1 left-1.5 text-[9px] text-white font-mono bg-black/60 px-1 rounded">0:00 - 0:08</span>
+                </div>
+
+                {/* Marcador de Transição (Imagem 2) */}
+                <div className="w-6 h-6 rounded-md bg-purple-600 text-white flex items-center justify-center shadow-xs shrink-0 z-10 cursor-pointer" title="Transição: Cross fade">
+                  <Sliders size={12} strokeWidth={2.5} />
+                </div>
+
+                {/* Clipe 2 */}
+                <div className="flex-1 h-full rounded-lg bg-gray-800 overflow-hidden relative group cursor-pointer border border-transparent hover:border-purple-600">
+                  <img
+                    src="https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?auto=format&fit=crop&w=300&q=80"
+                    alt="Clip 2"
+                    className="w-full h-full object-cover opacity-85"
+                  />
+                  <span className="absolute bottom-1 left-1.5 text-[9px] text-white font-mono bg-black/60 px-1 rounded">0:08 - 0:15</span>
+                </div>
+
+                {/* Marcador de Transição 2 */}
+                <div className="w-6 h-6 rounded-md bg-purple-600 text-white flex items-center justify-center shadow-xs shrink-0 z-10 cursor-pointer" title="Transição: Burn">
+                  <Sliders size={12} strokeWidth={2.5} />
+                </div>
+
+                {/* Clipe 3 */}
+                <div className="flex-1 h-full rounded-lg bg-gray-800 overflow-hidden relative group cursor-pointer border border-transparent hover:border-purple-600">
+                  <img
+                    src="https://images.unsplash.com/photo-1519681393784-d120267933ba?auto=format&fit=crop&w=300&q=80"
+                    alt="Clip 3"
+                    className="w-full h-full object-cover opacity-85"
+                  />
+                  <span className="absolute bottom-1 left-1.5 text-[9px] text-white font-mono bg-black/60 px-1 rounded">0:15 - 0:21</span>
                 </div>
               </div>
 
-              <div className="p-3 space-y-1">
-                <h3 className="text-[13px] font-medium text-ink group-hover:text-deep-teal transition-colors truncate">
-                  {proj.title}
-                </h3>
-                <div className="flex items-center justify-between text-[11px] text-graphite">
-                  <span>{proj.resolution}</span>
-                  <span>{proj.lastEdited}</span>
+              {/* Faixa 2: Trilha Sonora / Áudio (Onda Sonora Estilo Imagem 2) */}
+              <div className="h-10 bg-indigo-50 border border-indigo-200/70 rounded-xl px-3 flex items-center justify-between text-[11px] text-indigo-900 font-medium overflow-hidden relative">
+                <div className="flex items-center gap-2 z-10">
+                  <Music size={13} className="text-indigo-600" />
+                  <span className="truncate">Malibu Acoustic Sunset - 120bpm</span>
+                </div>
+
+                {/* Simulação gráfica da forma de onda de áudio */}
+                <div className="flex items-center gap-0.5 opacity-60">
+                  {Array.from({ length: 48 }).map((_, i) => (
+                    <div
+                      key={i}
+                      className="w-1 bg-indigo-500 rounded-full"
+                      style={{ height: `${Math.sin(i * 0.4) * 14 + 16}px` }}
+                    />
+                  ))}
                 </div>
               </div>
             </div>
-          ))}
+          </div>
         </div>
       </div>
+
+      {/* Modal de Exportação */}
+      {showExportModal && (
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-xs flex items-center justify-center z-50 p-4">
+          <div className="bg-white border border-gray-200 rounded-2xl p-6 max-w-sm w-full space-y-4 shadow-xl">
+            <div className="flex items-center justify-between">
+              <h3 className="text-[16px] font-medium text-gray-900">Exportar Vídeo</h3>
+              <button onClick={() => setShowExportModal(false)} className="text-gray-400 hover:text-gray-700 cursor-pointer">
+                <X size={16} />
+              </button>
+            </div>
+            <p className="text-[13px] text-gray-600">
+              Escolha a resolução desejada para exportação acelerada por GPU:
+            </p>
+            <div className="space-y-2">
+              <button 
+                onClick={() => setShowExportModal(false)}
+                className="w-full p-3 rounded-xl border border-gray-200 hover:border-purple-600 hover:bg-purple-50 text-left transition-all cursor-pointer flex items-center justify-between"
+              >
+                <div>
+                  <span className="font-medium text-[13px] text-gray-900 block">4K Ultra HD (3840x2160)</span>
+                  <span className="text-[11px] text-gray-500">Máxima fidelidade para YouTube e Telas Grandes</span>
+                </div>
+                <span className="text-[11px] font-medium text-purple-700">60 FPS</span>
+              </button>
+              <button 
+                onClick={() => setShowExportModal(false)}
+                className="w-full p-3 rounded-xl border border-gray-200 hover:border-purple-600 hover:bg-purple-50 text-left transition-all cursor-pointer flex items-center justify-between"
+              >
+                <div>
+                  <span className="font-medium text-[13px] text-gray-900 block">1080p Full HD (1920x1080)</span>
+                  <span className="text-[11px] text-gray-500">Ideal para redes sociais e compartilhamento rápido</span>
+                </div>
+                <span className="text-[11px] font-medium text-purple-700">Recomendado</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

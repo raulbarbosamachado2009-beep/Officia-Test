@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { 
   Menu, 
   Share2, 
@@ -8,6 +8,14 @@ import {
   Cpu
 } from 'lucide-react';
 import { ModuleId, AIModel } from '../../types';
+import {
+  ModelSelector,
+  ModelSelectorContent,
+  ModelSelectorTrigger,
+  ModelSelectorValue,
+  DEFAULT_AI_MODELS,
+  AiModelSelection,
+} from '@/components/ui/ai-model-select';
 
 interface HeaderProps {
   activeModule: ModuleId;
@@ -24,6 +32,14 @@ export const Header: React.FC<HeaderProps> = ({
   onOpenContextTransfer,
   onSelectModelClick,
 }) => {
+  const [modelSelection, setModelSelection] = useState<AiModelSelection>({
+    id: "opus-4.5",
+    effort: "high",
+    context: "200K",
+    fast: true,
+    thinking: true,
+  });
+
   const getModuleTitle = (mod: ModuleId): { title: string; subtitle: string } => {
     switch (mod) {
       case 'coordinator':
@@ -52,7 +68,7 @@ export const Header: React.FC<HeaderProps> = ({
       case 'harvey':
         return { title: 'Harvey — Consultor Empresarial & Jurídico', subtitle: 'Auditoria de contratos, compliance, regulação e diagnósticos' };
       case 'communication':
-        return { title: 'Comunicação Automatizada', subtitle: 'Integração de canais de email, WhatsApp e mensageria' };
+        return { title: 'Comunicação Corporativa', subtitle: 'WhatsApp e canais omnichannel integrados ao CRM' };
       case 'flows':
         return { title: 'Fluxos Visuais', subtitle: 'Construção de pipelines em nós conectáveis' };
       case 'automations':
@@ -96,7 +112,7 @@ export const Header: React.FC<HeaderProps> = ({
       <div className="flex items-center gap-3 min-w-0">
         <button 
           onClick={onOpenMobileMenu}
-          className="lg:hidden p-1.5 text-graphite hover:text-ink rounded-btn hover:bg-soft-paper"
+          className="lg:hidden p-1.5 text-graphite hover:text-ink rounded-btn hover:bg-soft-paper cursor-pointer"
           aria-label="Abrir Menu"
         >
           <Menu size={18} strokeWidth={2.75} />
@@ -108,7 +124,7 @@ export const Header: React.FC<HeaderProps> = ({
               {currentInfo.title}
             </h1>
             <span className="hidden sm:inline-block text-[10px] text-deep-teal font-medium bg-deep-teal/10 px-2 py-0.5 rounded-chip">
-              Apple SF Design
+              Design Apple
             </span>
           </div>
           <p className="hidden md:block text-[11px] text-graphite truncate leading-tight">
@@ -117,25 +133,24 @@ export const Header: React.FC<HeaderProps> = ({
         </div>
       </div>
 
-      {/* Right controls */}
-      <div className="flex items-center gap-2">
-        {/* Active Model Pill */}
-        <button 
-          onClick={onSelectModelClick}
-          className="flex items-center gap-1.5 px-2.5 py-1 rounded-inp border border-warm-mist bg-soft-paper text-ink text-[12px] font-normal hover:border-graphite/40 transition-colors shadow-subtle"
-          title="Modelo ativo para inferência"
+      {/* Right controls: Novo ModelSelector (Imagens 5 e 6) + Transferência de Contexto */}
+      <div className="flex items-center gap-2.5">
+        <ModelSelector
+          models={DEFAULT_AI_MODELS}
+          value={modelSelection}
+          onValueChange={setModelSelection}
         >
-          <Cpu size={13} strokeWidth={2.75} className="text-deep-teal" />
-          <span className="font-medium text-ink">{selectedModel.name}</span>
-          <span className="text-[10px] text-graphite">({selectedModel.specs.speed})</span>
-        </button>
+          <ModelSelectorTrigger className="h-8.5 rounded-full px-3 py-1 bg-soft-paper border border-warm-mist text-ink shadow-2xs">
+            <ModelSelectorValue className="text-xs" />
+          </ModelSelectorTrigger>
+          <ModelSelectorContent side="bottom" />
+        </ModelSelector>
 
-        {/* Transfer Context button as requested in document */}
         <button 
           onClick={onOpenContextTransfer}
-          className="flex items-center gap-1.5 px-3 py-1 rounded-inp bg-ink text-parchment text-[12px] font-normal hover:bg-pure-black transition-colors shadow-subtle"
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-ink text-parchment text-[12px] font-medium hover:bg-pure-black transition-colors shadow-2xs cursor-pointer"
         >
-          <Share2 size={13} strokeWidth={2.75} />
+          <Share2 size={13} strokeWidth={2.5} />
           <span className="hidden sm:inline">Transferir Contexto</span>
         </button>
       </div>
