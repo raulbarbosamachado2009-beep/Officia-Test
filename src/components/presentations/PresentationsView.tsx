@@ -1,29 +1,29 @@
 import React, { useState } from 'react';
 import { 
-  Presentation, 
   ChevronLeft, 
   ChevronRight, 
-  Sparkles, 
   Download, 
-  FileText, 
   Layout, 
-  Plus, 
   Check, 
-  Share2 
+  Share2,
+  Presentation,
+  TrendingUp,
+  FileSpreadsheet,
+  Award
 } from 'lucide-react';
+import { AnimatedAIChat, CommandSuggestion } from '../ui/animated-ai-chat';
 
 interface Slide {
   id: number;
+  badge: string;
   title: string;
   subtitle: string;
   bullets: string[];
   kpi?: { value: string; label: string };
-  badge: string;
 }
 
 export const PresentationsView: React.FC = () => {
   const [currentSlideIndex, setCurrentSlideIndex] = useState(0);
-  const [deckPrompt, setDeckPrompt] = useState('');
   const [slides, setSlides] = useState<Slide[]>([
     {
       id: 1,
@@ -65,6 +65,53 @@ export const PresentationsView: React.FC = () => {
 
   const currentSlide = slides[currentSlideIndex];
 
+  const suggestions: CommandSuggestion[] = [
+    {
+      icon: <Presentation className="w-4 h-4" />,
+      label: "Pitch Deck Startup",
+      description: "Deck de 10 slides para captação Seed / Série A",
+      prefix: "/pitch"
+    },
+    {
+      icon: <TrendingUp className="w-4 h-4" />,
+      label: "Resultados Trimestrais",
+      description: "Apresentação de KPIs, faturamento e metas Q4",
+      prefix: "/qbr"
+    },
+    {
+      icon: <FileSpreadsheet className="w-4 h-4" />,
+      label: "Treinamento de Equipe",
+      description: "Apresentação onboarding para novos colaboradores",
+      prefix: "/onboarding"
+    },
+    {
+      icon: <Award className="w-4 h-4" />,
+      label: "Keynote de Lançamento",
+      description: "Slides no estilo Apple para anúncio de produto",
+      prefix: "/keynote"
+    }
+  ];
+
+  const handleSendMessage = (msg: string) => {
+    if (!msg.trim()) return;
+    setSlides(prev => [
+      {
+        id: Date.now(),
+        badge: 'Novo Slide IA',
+        title: msg,
+        subtitle: 'Estruturado a partir do comando da inteligência artificial.',
+        bullets: [
+          'Visão geral da solução com base em dados de mercado',
+          'Principais diferenciais competitivos mapeados',
+          'Plano de ação e próximos passos estratégicos'
+        ],
+        kpi: { value: '98%', label: 'Assertividade de entrega' }
+      },
+      ...prev
+    ]);
+    setCurrentSlideIndex(0);
+  };
+
   const handleNext = () => {
     if (currentSlideIndex < slides.length - 1) setCurrentSlideIndex(currentSlideIndex + 1);
   };
@@ -73,181 +120,89 @@ export const PresentationsView: React.FC = () => {
     if (currentSlideIndex > 0) setCurrentSlideIndex(currentSlideIndex - 1);
   };
 
-  const handleGenerateDeck = () => {
-    if (!deckPrompt.trim()) return;
-
-    setSlides([
-      {
-        id: 1,
-        badge: 'Planejamento Executivo',
-        title: deckPrompt,
-        subtitle: 'Estrutura gerada por IA com base na memória universal da empresa',
-        bullets: [
-          'Diagnóstico inicial e análise de viabilidade de mercado',
-          'Definição de cronograma e marcos críticos de entrega',
-          'Alocação eficiente de recursos e ferramentas'
-        ],
-        kpi: { value: 'R$ 150k', label: 'Economia estimada' }
-      },
-      ...slides
-    ]);
-    setCurrentSlideIndex(0);
-    setDeckPrompt('');
-  };
-
   return (
-    <div className="flex-1 flex flex-col h-full overflow-y-auto px-4 lg:px-8 py-6 space-y-6">
-      {/* Top Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between pb-4 border-b border-warm-mist/60 gap-3">
-        <div>
-          <h2 className="text-[20px] font-medium text-ink flex items-center gap-2">
-            <Presentation size={18} strokeWidth={2.75} className="text-deep-teal" />
-            <span>Gerador de Apresentações de Slides</span>
-          </h2>
-          <p className="text-[12px] text-graphite mt-0.5">
-            Crie apresentações completas a partir de instruções, documentos e pesquisas com identidade visual padronizada.
-          </p>
-        </div>
+    <div className="flex-1 flex flex-col h-full overflow-y-auto">
+      <AnimatedAIChat
+        title="Apresentações & Pitch Decks"
+        subtitle="Crie apresentações elegantes com narrativa estruturada e métricas prontas para exportar."
+        placeholder="Descreva a apresentação ou cole o conteúdo que deseja transformar em slides..."
+        suggestions={suggestions}
+        onSendMessage={handleSendMessage}
+      >
+        {/* Slides Preview Deck */}
+        <div className="w-full max-w-4xl mx-auto pt-4 pb-12 space-y-4">
+          <div className="flex items-center justify-between pb-2 border-b border-warm-mist/60 dark:border-white/10">
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-semibold uppercase tracking-wider text-graphite dark:text-white/60">
+                Visualização do Deck
+              </span>
+              <span className="text-xs text-graphite dark:text-white/40">
+                (Slide {currentSlideIndex + 1} de {slides.length})
+              </span>
+            </div>
 
-        <div className="flex items-center gap-2">
-          <button className="flex items-center gap-1.5 px-3 py-1.5 rounded-inp bg-soft-paper border border-warm-mist text-[12px] text-ink hover:bg-parchment transition-colors shadow-subtle">
-            <Layout size={13} strokeWidth={2.75} />
-            <span>Alterar Tema</span>
-          </button>
-          <button className="flex items-center gap-1.5 px-3 py-1.5 rounded-inp bg-ink text-parchment text-[12px] font-medium hover:bg-pure-black transition-colors shadow-subtle">
-            <Download size={13} strokeWidth={2.75} />
-            <span>Exportar PPTX / PDF</span>
-          </button>
-        </div>
-      </div>
-
-      {/* Slide Prompt Generator */}
-      <div className="bg-soft-paper border border-warm-mist rounded-card p-4 shadow-subtle space-y-2">
-        <label className="text-[11px] font-medium uppercase tracking-wider text-graphite flex items-center gap-1.5">
-          <Sparkles size={13} strokeWidth={2.75} className="text-deep-teal" />
-          <span>Transforme ideias ou documentos em slides estruturados</span>
-        </label>
-        <div className="flex gap-2">
-          <input
-            type="text"
-            value={deckPrompt}
-            onChange={(e) => setDeckPrompt(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && handleGenerateDeck()}
-            placeholder="Ex: Proposta comercial para captação de clientes de saúde com foco em ROI e segurança..."
-            className="flex-1 bg-parchment border border-warm-mist rounded-inp px-3 py-2 text-[13px] text-ink placeholder:text-graphite outline-hidden focus:border-deep-teal"
-          />
-          <button
-            onClick={handleGenerateDeck}
-            className="px-4 py-2 bg-deep-teal text-white text-[13px] font-medium rounded-inp hover:bg-deep-teal/90 flex items-center gap-1.5 shadow-subtle shrink-0"
-          >
-            <Sparkles size={13} strokeWidth={2.75} />
-            <span>Gerar Slides</span>
-          </button>
-        </div>
-      </div>
-
-      {/* Main Slide Stage & Thumbnails Rail */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-        {/* Thumbnails Sidebar (3 cols) */}
-        <div className="lg:col-span-3 space-y-2.5">
-          <span className="text-[11px] font-medium uppercase tracking-wider text-graphite block">
-            Índice de Slides ({slides.length})
-          </span>
-          <div className="space-y-2">
-            {slides.map((s, idx) => (
-              <button
-                key={s.id}
-                onClick={() => setCurrentSlideIndex(idx)}
-                className={`
-                  w-full p-3 rounded-card border text-left transition-all shadow-subtle flex items-start gap-2.5
-                  ${currentSlideIndex === idx 
-                    ? 'border-deep-teal bg-deep-teal/5 text-ink ring-1 ring-deep-teal/30' 
-                    : 'border-warm-mist bg-soft-paper text-graphite hover:border-graphite/40'}
-                `}
+            <div className="flex items-center gap-2">
+              <button 
+                onClick={handlePrev} 
+                disabled={currentSlideIndex === 0}
+                className="p-1.5 rounded-lg bg-soft-paper dark:bg-white/5 border border-warm-mist dark:border-white/10 text-ink dark:text-white disabled:opacity-40 hover:bg-warm-mist/40 transition-colors"
               >
-                <span className="w-5 h-5 rounded-btn bg-parchment border border-warm-mist flex items-center justify-center text-[10px] font-medium text-ink shrink-0">
-                  {idx + 1}
-                </span>
-                <div className="min-w-0">
-                  <div className="text-[12px] font-medium text-ink truncate">{s.title}</div>
-                  <div className="text-[10px] text-graphite truncate mt-0.5">{s.badge}</div>
-                </div>
+                <ChevronLeft size={16} />
               </button>
-            ))}
+              <button 
+                onClick={handleNext} 
+                disabled={currentSlideIndex === slides.length - 1}
+                className="p-1.5 rounded-lg bg-soft-paper dark:bg-white/5 border border-warm-mist dark:border-white/10 text-ink dark:text-white disabled:opacity-40 hover:bg-warm-mist/40 transition-colors"
+              >
+                <ChevronRight size={16} />
+              </button>
+              <button className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-ink text-parchment dark:bg-white dark:text-black text-xs font-medium hover:opacity-90 transition-opacity ml-2">
+                <Download size={13} />
+                <span>Exportar PPTX</span>
+              </button>
+            </div>
           </div>
-        </div>
 
-        {/* Big Slide Stage (9 cols) */}
-        <div className="lg:col-span-9 bg-soft-paper border border-warm-mist rounded-card p-8 shadow-subtle flex flex-col justify-between min-h-[460px] relative">
-          <div className="space-y-6">
-            <div className="flex items-center justify-between">
-              <span className="text-[11px] font-medium uppercase tracking-wider text-deep-teal bg-deep-teal/10 px-3 py-1 rounded-chip">
-                {currentSlide.badge}
-              </span>
-              <span className="text-[12px] text-graphite font-mono">
-                {currentSlideIndex + 1} de {slides.length}
-              </span>
-            </div>
-
-            <div className="space-y-2 max-w-2xl">
-              <h3 className="text-[28px] font-medium text-ink tracking-tight leading-tight">
-                {currentSlide.title}
-              </h3>
-              <p className="text-[15px] text-graphite leading-relaxed">
-                {currentSlide.subtitle}
-              </p>
-            </div>
-
-            {/* Bullets & KPI Card */}
-            <div className="grid grid-cols-1 md:grid-cols-12 gap-6 pt-4">
-              <div className="md:col-span-8 space-y-3">
-                {currentSlide.bullets.map((b, idx) => (
-                  <div key={idx} className="flex items-start gap-3">
-                    <span className="w-2 h-2 rounded-full bg-deep-teal mt-2 shrink-0"></span>
-                    <span className="text-[14px] text-ink leading-relaxed font-normal">{b}</span>
-                  </div>
-                ))}
+          {/* Active Slide Card */}
+          {currentSlide && (
+            <div className="relative aspect-video w-full rounded-2xl bg-white dark:bg-[#14161d] border border-warm-mist/80 dark:border-white/10 shadow-xl p-8 sm:p-12 flex flex-col justify-between overflow-hidden">
+              <div className="space-y-4">
+                <span className="inline-block px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wider bg-deep-teal/10 text-deep-teal dark:bg-deep-teal/20">
+                  {currentSlide.badge}
+                </span>
+                <h2 className="text-2xl sm:text-4xl font-semibold tracking-tight text-ink dark:text-white leading-tight">
+                  {currentSlide.title}
+                </h2>
+                <p className="text-sm sm:text-base text-graphite dark:text-white/70 max-w-2xl leading-relaxed">
+                  {currentSlide.subtitle}
+                </p>
               </div>
 
-              {currentSlide.kpi && (
-                <div className="md:col-span-4 p-5 rounded-card bg-parchment border border-warm-mist flex flex-col justify-center items-center text-center shadow-subtle">
-                  <div className="text-[36px] font-medium text-deep-teal leading-none">
-                    {currentSlide.kpi.value}
-                  </div>
-                  <div className="text-[12px] text-graphite mt-1.5 font-medium">
-                    {currentSlide.kpi.label}
-                  </div>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-6 border-t border-warm-mist/40 dark:border-white/10">
+                <div className="md:col-span-2 space-y-2">
+                  {currentSlide.bullets.map((bullet, idx) => (
+                    <div key={idx} className="flex items-start gap-2.5 text-xs sm:text-sm text-ink/80 dark:text-white/80">
+                      <span className="w-1.5 h-1.5 rounded-full bg-deep-teal mt-2 shrink-0" />
+                      <span>{bullet}</span>
+                    </div>
+                  ))}
                 </div>
-              )}
+
+                {currentSlide.kpi && (
+                  <div className="p-4 rounded-xl bg-parchment dark:bg-white/[0.03] border border-warm-mist dark:border-white/5 flex flex-col justify-center text-center">
+                    <span className="text-2xl sm:text-3xl font-bold text-deep-teal tracking-tight">
+                      {currentSlide.kpi.value}
+                    </span>
+                    <span className="text-xs text-graphite dark:text-white/50 mt-1">
+                      {currentSlide.kpi.label}
+                    </span>
+                  </div>
+                )}
+              </div>
             </div>
-          </div>
-
-          {/* Slide Navigation Controls */}
-          <div className="flex items-center justify-between pt-8 border-t border-warm-mist/60 mt-6">
-            <button
-              onClick={handlePrev}
-              disabled={currentSlideIndex === 0}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-btn border border-warm-mist text-[12px] text-graphite hover:text-ink hover:bg-parchment disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
-            >
-              <ChevronLeft size={14} strokeWidth={2.75} />
-              <span>Anterior</span>
-            </button>
-
-            <span className="text-[11px] text-graphite">
-              Apresentação sincronizada com a Memória Universal
-            </span>
-
-            <button
-              onClick={handleNext}
-              disabled={currentSlideIndex === slides.length - 1}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-btn border border-warm-mist text-[12px] text-graphite hover:text-ink hover:bg-parchment disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
-            >
-              <span>Próximo</span>
-              <ChevronRight size={14} strokeWidth={2.75} />
-            </button>
-          </div>
+          )}
         </div>
-      </div>
+      </AnimatedAIChat>
     </div>
   );
 };

@@ -1,165 +1,220 @@
 import React, { useState } from 'react';
-import { 
-  Workflow, 
-  Sparkles, 
-  Play, 
-  CheckCircle2, 
-  ArrowRight, 
-  Bell, 
-  Plus, 
-  Clock, 
-  Mail, 
-  Users, 
-  Layers,
-  ChevronDown
-} from 'lucide-react';
+import { AnimatedAIChat, CommandSuggestion } from '../ui/animated-ai-chat';
+import WorkflowBlueprint, { WorkflowGraph, WorkflowApp } from '../ui/interactive-workflow-blueprint';
+import { Workflow, Cpu, Sparkles, Database, Plus, ChevronRight } from 'lucide-react';
 
-interface AutomationNode {
-  id: string;
-  type: 'trigger' | 'condition' | 'action';
-  title: string;
-  desc: string;
-  module: string;
+const defaultGraph: WorkflowGraph = {
+  nodes: [
+    { 
+      id: "question", 
+      type: "blueprint", 
+      position: { x: 30, y: 70 }, 
+      data: { 
+        label: "Gatilho de Entrada", 
+        detail: "Disparado quando um novo lead ou mensagem chega via webhook.", 
+        kind: "trigger" 
+      } 
+    },
+    { 
+      id: "sheet", 
+      type: "blueprint", 
+      position: { x: 280, y: 170 }, 
+      data: { 
+        label: "Consulta ao Google Sheets", 
+        detail: "Lê registros e dados de clientes da planilha oficial.", 
+        kind: "integration", 
+        tool: "Google Sheets", 
+        logo: "https://cdn.simpleicons.org/googlesheets/34A853" 
+      } 
+    },
+    { 
+      id: "query", 
+      type: "blueprint", 
+      position: { x: 530, y: 70 }, 
+      data: { 
+        label: "Agente IA Decisor", 
+        detail: "Analisa a intenção com DeepSeek / GPT-4o e gera o resumo.", 
+        kind: "agent", 
+        tool: "Officia Agent", 
+        logo: "https://cdn.simpleicons.org/n8n/EA4B71" 
+      } 
+    },
+    { 
+      id: "answer", 
+      type: "blueprint", 
+      position: { x: 780, y: 170 }, 
+      data: { 
+        label: "Notificação no Slack", 
+        detail: "Envia o resumo do lead e as métricas para o canal do time.", 
+        kind: "delivery", 
+        tool: "Slack", 
+        logo: "https://cdn.21st.dev/assets/mirror/17/17160477a475166ad0556e0028e3b0bd0634d70c02e7b920c04a4429ea184ab3.svg" 
+      } 
+    },
+  ],
+  edges: [
+    { id: "e-question-sheet", source: "question", target: "sheet" },
+    { id: "e-sheet-query", source: "sheet", target: "query" },
+    { id: "e-query-answer", source: "query", target: "answer" },
+  ],
+};
+
+const defaultApps: WorkflowApp[] = [
+  { 
+    id: "officia-ia", 
+    name: "Officia IA", 
+    actions: [
+      { label: "Agente de Análise", detail: "Classifica e gera texto estruturado.", kind: "agent" },
+      { label: "Extrator de Dados", detail: "Extrai JSON a partir de documentos.", kind: "agent" },
+    ] 
+  },
+  { 
+    id: "sheets", 
+    name: "Google Sheets", 
+    logo: "https://cdn.simpleicons.org/googlesheets/34A853", 
+    actions: [
+      { label: "Ler Linhas", detail: "Obtém linhas atualizadas da planilha.", kind: "integration", tool: "Google Sheets" },
+      { label: "Gravar Linha", detail: "Salva o resultado aprovado.", kind: "delivery", tool: "Google Sheets" },
+    ] 
+  },
+  { 
+    id: "slack", 
+    name: "Slack", 
+    logo: "https://cdn.21st.dev/assets/mirror/17/17160477a475166ad0556e0028e3b0bd0634d70c02e7b920c04a4429ea184ab3.svg", 
+    actions: [
+      { label: "Enviar Alerta", detail: "Dispara mensagem no canal comercial.", kind: "delivery", tool: "Slack" },
+      { label: "Pedir Aprovação", detail: "Aguarda confirmação de um gestor.", kind: "review", tool: "Slack" },
+    ] 
+  },
+  { 
+    id: "webhook", 
+    name: "Webhooks & APIs", 
+    actions: [
+      { label: "Requisição HTTP", detail: "Envia payload POST para qualquer API.", kind: "integration" },
+      { label: "Gatilho Webhook", detail: "Escuta eventos externos.", kind: "trigger" },
+    ] 
+  },
+];
+
+interface AutomationsViewProps {
+  initialType?: 'fluxo' | 'automacao';
 }
 
-export const AutomationsView: React.FC = () => {
-  const [naturalPrompt, setNaturalPrompt] = useState('');
-  const [nodes, setNodes] = useState<AutomationNode[]>([
+export const AutomationsView: React.FC<AutomationsViewProps> = ({ initialType = 'fluxo' }) => {
+  const [selectedType, setSelectedType] = useState<'fluxo' | 'automacao'>(initialType);
+  const [inProject, setInProject] = useState(false);
+  const [activeProjectTitle, setActiveProjectTitle] = useState('Pipeline Comercial Inteligente');
+
+  const suggestions: CommandSuggestion[] = [
     {
-      id: 'node-1',
-      type: 'trigger',
-      title: 'Gatilho: Novo Contato via Webhook ou Chat',
-      desc: 'Disparado quando um visitante preenche o formulário na Landing Page.',
-      module: 'AI Studio'
+      icon: <Workflow className="w-4 h-4" />,
+      label: "Fluxo de CRM",
+      description: "Conectar formulário da landing page ao CRM",
+      prefix: "/crm-sync"
     },
     {
-      id: 'node-2',
-      type: 'condition',
-      title: 'Condição: Qualificação com IA',
-      desc: 'Verifica se a empresa possui mais de 10 colaboradores ou orçamento > R$ 20.000.',
-      module: 'Coordenador Global'
+      icon: <Cpu className="w-4 h-4" />,
+      label: "Automação Noturna",
+      description: "Consolidar relatórios e disparar e-mail às 23h",
+      prefix: "/nightly-report"
     },
     {
-      id: 'node-3',
-      type: 'action',
-      title: 'Ação 1: Registrar Oportunidade no CRM',
-      desc: 'Cria o lead na etapa "Contatados" com pontuação preditiva calculada.',
-      module: 'CRM Inteligente'
+      icon: <Database className="w-4 h-4" />,
+      label: "Sync Supabase",
+      description: "Sincronizar tabelas com Google Sheets",
+      prefix: "/sync-db"
     },
     {
-      id: 'node-4',
-      type: 'action',
-      title: 'Ação 2: Disparar Resposta Personalizada',
-      desc: 'Envia mensagem via WhatsApp e Email com proposta adaptada.',
-      module: 'Comunicação'
+      icon: <Sparkles className="w-4 h-4" />,
+      label: "Disparo WhatsApp",
+      description: "Automação de mensagens com resposta por IA",
+      prefix: "/whatsapp-ai"
     }
-  ]);
+  ];
 
-  const [isRunning, setIsRunning] = useState(false);
-  const [lastRunSuccess, setLastRunSuccess] = useState(false);
+  const recentProjects = [
+    { id: 'p1', title: 'Pipeline Comercial Omnichannel', type: 'Fluxo', nodesCount: 6, updatedAt: 'Hoje, 11:20' },
+    { id: 'p2', title: 'Automação de Faturamento & Stripe', type: 'Automação', nodesCount: 4, updatedAt: 'Ontem' },
+    { id: 'p3', title: 'Sincronização Noturna Supabase-Sheets', type: 'Fluxo', nodesCount: 5, updatedAt: '3 dias atrás' }
+  ];
 
-  const handleTestRun = () => {
-    setIsRunning(true);
-    setTimeout(() => {
-      setIsRunning(false);
-      setLastRunSuccess(true);
-      setTimeout(() => setLastRunSuccess(false), 3000);
-    }, 1200);
-  };
+  if (inProject) {
+    return (
+      <div className="flex-1 flex flex-col h-full overflow-hidden p-4 sm:p-6 bg-parchment dark:bg-[#0c0d10]">
+        <div className="w-full h-full flex flex-col">
+          <WorkflowBlueprint
+            title={`${selectedType === 'fluxo' ? 'Fluxo' : 'Automação'}: ${activeProjectTitle}`}
+            initialGraph={defaultGraph}
+            apps={defaultApps}
+            onBack={() => setInProject(false)}
+          />
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="flex-1 flex flex-col h-full overflow-y-auto px-4 lg:px-8 py-6 space-y-6">
-      {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between pb-4 border-b border-warm-mist/60 gap-3">
-        <div>
-          <h2 className="text-[20px] font-medium text-ink flex items-center gap-2">
-            <Workflow size={18} strokeWidth={2.75} className="text-deep-teal" />
-            <span>Central de Automações & Fluxos Visuais</span>
-          </h2>
-          <p className="text-[12px] text-graphite mt-0.5">
-            Crie fluxos integrados descrevendo o que deseja em linguagem natural ou conectando nós de gatilhos e ações.
-          </p>
-        </div>
-
-        <div className="flex items-center gap-2">
-          <button
-            onClick={handleTestRun}
-            disabled={isRunning}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-inp bg-deep-teal text-white text-[12px] font-medium hover:bg-deep-teal/90 transition-colors shadow-subtle disabled:opacity-60"
-          >
-            <Play size={13} strokeWidth={2.75} />
-            <span>{isRunning ? 'Executando Teste...' : 'Testar Fluxo Agora'}</span>
-          </button>
-        </div>
-      </div>
-
-      {/* Natural language flow creator */}
-      <div className="bg-soft-paper border border-warm-mist rounded-card p-4 shadow-subtle space-y-2">
-        <label className="text-[11px] font-medium uppercase tracking-wider text-graphite flex items-center gap-1.5">
-          <Sparkles size={13} strokeWidth={2.75} className="text-deep-teal" />
-          <span>Criar Automação por Texto</span>
-        </label>
-        <div className="flex gap-2">
-          <input
-            type="text"
-            value={naturalPrompt}
-            onChange={(e) => setNaturalPrompt(e.target.value)}
-            placeholder="Ex: Quando um lead for marcado como 'Fechado' no CRM, gerar apresentação comercial e enviar fatura..."
-            className="flex-1 bg-parchment border border-warm-mist rounded-inp px-3 py-2 text-[13px] text-ink placeholder:text-graphite outline-hidden focus:border-deep-teal"
-          />
-          <button className="px-4 py-2 bg-ink text-parchment text-[13px] font-medium rounded-inp hover:bg-pure-black flex items-center gap-1.5 shadow-subtle shrink-0">
-            <Sparkles size={13} strokeWidth={2.75} />
-            <span>Construir Nós</span>
-          </button>
-        </div>
-      </div>
-
-      {/* Visual Connected Nodes Flow */}
-      <div className="bg-soft-paper border border-warm-mist rounded-card p-6 shadow-subtle space-y-4">
-        <div className="flex items-center justify-between pb-2 border-b border-warm-mist">
-          <span className="text-[13px] font-medium text-ink">Fluxo Ativo: Onboarding Comercial Automático</span>
-          <span className="text-[11px] text-emerald-700 bg-emerald-50 border border-emerald-200 px-2.5 py-0.5 rounded-chip font-medium">
-            Monitorando 24/7
-          </span>
-        </div>
-
-        {/* Nodes pipeline */}
-        <div className="space-y-3 relative py-2">
-          {nodes.map((node, idx) => (
-            <div key={node.id} className="relative flex flex-col items-center">
-              <div className="w-full p-4 bg-parchment border border-warm-mist rounded-card shadow-subtle flex items-start justify-between gap-4 hover:border-deep-teal transition-all">
-                <div className="space-y-1">
-                  <div className="flex items-center gap-2">
-                    <span className={`text-[10px] uppercase tracking-wider px-2 py-0.5 rounded-chip font-medium ${node.type === 'trigger' ? 'bg-amber-100 text-amber-900' : node.type === 'condition' ? 'bg-purple-100 text-purple-900' : 'bg-deep-teal/15 text-deep-teal'}`}>
-                      {node.type === 'trigger' ? 'Gatilho' : node.type === 'condition' ? 'Condição' : 'Ação'}
-                    </span>
-                    <h4 className="text-[13px] font-medium text-ink">{node.title}</h4>
-                  </div>
-                  <p className="text-[12px] text-graphite">{node.desc}</p>
-                </div>
-
-                <span className="text-[11px] font-medium text-graphite bg-soft-paper border border-warm-mist px-2.5 py-1 rounded-inp shrink-0">
-                  {node.module}
-                </span>
-              </div>
-
-              {idx < nodes.length - 1 && (
-                <div className="my-1.5 flex flex-col items-center">
-                  <div className="w-0.5 h-3 bg-warm-mist"></div>
-                  <ChevronDown size={14} strokeWidth={2.75} className="text-graphite" />
-                </div>
-              )}
-            </div>
-          ))}
-        </div>
-
-        {lastRunSuccess && (
-          <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-inp text-[12px] text-emerald-800 flex items-center gap-2">
-            <CheckCircle2 size={14} strokeWidth={2.75} />
-            <span>Fluxo testado com sucesso! Todos os 4 nós foram acionados em 312ms.</span>
+    <div className="flex-1 flex flex-col h-full overflow-y-auto">
+      <AnimatedAIChat
+        title={selectedType === 'fluxo' ? 'Construir Novo Fluxo' : 'Construir Nova Automação'}
+        subtitle="Descreva em linguagem natural o que deseja conectar e a IA montará o blueprint visual automaticamente."
+        placeholder={`Descreva o que este ${selectedType === 'fluxo' ? 'fluxo' : 'automação'} deve realizar...`}
+        suggestions={suggestions}
+        typeOptions={[
+          { label: "Fluxo", value: "fluxo" },
+          { label: "Automação", value: "automacao" }
+        ]}
+        selectedType={selectedType}
+        onTypeChange={(t) => setSelectedType(t as 'fluxo' | 'automacao')}
+        onSendMessage={(prompt) => {
+          setActiveProjectTitle(prompt.slice(0, 36) || 'Novo Blueprint');
+          setInProject(true);
+        }}
+      >
+        {/* Recent Visual Workflows / Quick Launch */}
+        <div className="w-full max-w-2xl mx-auto pt-6 pb-12 space-y-3">
+          <div className="flex items-center justify-between text-xs font-medium text-graphite dark:text-white/60 px-1">
+            <span>Seus projetos de {selectedType === 'fluxo' ? 'Fluxos' : 'Automações'}</span>
+            <button
+              onClick={() => {
+                setActiveProjectTitle('Canvas em Branco');
+                setInProject(true);
+              }}
+              className="text-deep-teal hover:underline flex items-center gap-1 font-semibold"
+            >
+              <Plus className="w-3.5 h-3.5" />
+              <span>Abrir editor em branco</span>
+            </button>
           </div>
-        )}
-      </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            {recentProjects.map((proj) => (
+              <div
+                key={proj.id}
+                onClick={() => {
+                  setActiveProjectTitle(proj.title);
+                  setInProject(true);
+                }}
+                className="p-3.5 rounded-xl bg-soft-paper dark:bg-white/[0.03] border border-warm-mist dark:border-white/[0.08] hover:border-deep-teal/60 dark:hover:border-white/30 transition-all cursor-pointer shadow-2xs group text-left"
+              >
+                <div className="flex items-center justify-between mb-1.5">
+                  <span className="text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full bg-deep-teal/10 text-deep-teal dark:bg-deep-teal/20">
+                    {proj.type}
+                  </span>
+                  <span className="text-[10px] text-graphite dark:text-white/40">{proj.nodesCount} nós</span>
+                </div>
+                <h4 className="text-xs font-semibold text-ink dark:text-white group-hover:text-deep-teal transition-colors line-clamp-1">
+                  {proj.title}
+                </h4>
+                <p className="text-[11px] text-graphite dark:text-white/40 mt-1 flex items-center justify-between">
+                  <span>{proj.updatedAt}</span>
+                  <ChevronRight className="w-3.5 h-3.5 opacity-0 group-hover:opacity-100 transition-opacity" />
+                </p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </AnimatedAIChat>
     </div>
   );
 };

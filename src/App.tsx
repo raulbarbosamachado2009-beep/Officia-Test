@@ -8,6 +8,7 @@ import { ContextTransferModal } from './components/modals/ContextTransferModal';
 import { CoordinatorView } from './components/coordinator/CoordinatorView';
 import { ChatView } from './components/chat/ChatView';
 import { StudioView } from './components/studio/StudioView';
+import { DocumentsView } from './components/studio/DocumentsView';
 import { EditorProjectHub } from './components/media/EditorProjectHub';
 import { PresentationsView } from './components/presentations/PresentationsView';
 import { CRMView } from './components/business/CRMView';
@@ -16,6 +17,7 @@ import { BusinessAssistantView } from './components/business/BusinessAssistantVi
 import { CommunicationView } from './components/business/CommunicationView';
 import { ProjectsView } from './components/business/ProjectsView';
 import { AutomationsView } from './components/tools/AutomationsView';
+import { IntegrationsView } from './components/tools/IntegrationsView';
 import { ComputerAgentView } from './components/tools/ComputerAgentView';
 import { VoiceAssistantView } from './components/tools/VoiceAssistantView';
 import { AILabView } from './components/tools/AILabView';
@@ -133,29 +135,11 @@ export function App() {
 
       // 01. CREATOR
       case 'studio':
-        return <StudioView onOpenMobileMenu={() => setIsMobileMenuOpen(true)} />;
+        return <StudioView />;
       case 'presentations':
         return <PresentationsView />;
       case 'docs':
-        return (
-          <div className="flex-1 flex flex-col h-full p-6 sm:p-8 overflow-y-auto">
-            <h2 className="text-[22px] font-medium text-ink mb-2">Documentos & Especificações</h2>
-            <p className="text-[13px] text-graphite mb-6">Redação de PRDs, atas de reunião e relatórios técnicos assistidos por IA.</p>
-            <div className="bg-soft-paper border border-warm-mist rounded-card p-6 shadow-xs max-w-3xl">
-              <div className="text-[14px] font-medium text-ink mb-2">Novo Documento Estruturado</div>
-              <textarea 
-                rows={6} 
-                placeholder="Comece a redigir o documento ou descreva a pauta para geração automática..." 
-                className="w-full bg-parchment border border-warm-mist rounded-inp p-3 text-[14px] outline-hidden focus:border-deep-teal resize-none font-sans"
-              />
-              <div className="mt-3 flex justify-end">
-                <button className="px-3.5 py-1.5 rounded-inp bg-ink text-parchment text-[12px] font-medium hover:bg-pure-black transition-colors">
-                  Gerar com IA
-                </button>
-              </div>
-            </div>
-          </div>
-        );
+        return <DocumentsView />;
 
       // 02. EDIÇÃO (Nova Experiência de Projetos)
       case 'ai-editor':
@@ -179,9 +163,11 @@ export function App() {
 
       // 04. AUTOMAÇÃO
       case 'flows':
+        return <AutomationsView initialType="fluxo" />;
       case 'automations':
+        return <AutomationsView initialType="automacao" />;
       case 'integrations':
-        return <AutomationsView />;
+        return <IntegrationsView />;
       case 'computer-agent':
         return <ComputerAgentView />;
 

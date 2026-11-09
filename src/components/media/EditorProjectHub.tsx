@@ -122,7 +122,7 @@ export const EditorProjectHub: React.FC<EditorProjectHubProps> = ({
 
   // Se um projeto for selecionado, abre o ambiente de trabalho correspondente
   if (selectedProjectId) {
-    if (toolId === 'ai-editor') {
+    if (toolId === 'ai-editor' || toolId === 'motion-design') {
       return (
         <AIEditorWorkspace
           initialPrompt={aiPrompt}
@@ -169,7 +169,6 @@ export const EditorProjectHub: React.FC<EditorProjectHubProps> = ({
             />
           )}
           {toolId === 'photo-editor' && <PhotoEditorView />}
-          {toolId === 'motion-design' && <MotionDesignView />}
         </div>
       </div>
     );
@@ -181,23 +180,23 @@ export const EditorProjectHub: React.FC<EditorProjectHubProps> = ({
     return p.title.toLowerCase().includes(projectSearchQuery.toLowerCase());
   });
 
-  // Renderização da Página Inicial do IA Editor (Inspirada na organização da Lovable)
-  if (toolId === 'ai-editor') {
+  // Renderização da Página Inicial do IA Editor e Motion Design (Inspirada na organização da Lovable)
+  if (toolId === 'ai-editor' || toolId === 'motion-design') {
     return (
       <div className="flex-1 flex flex-col h-full overflow-y-auto px-4 lg:px-8 py-6 space-y-7 font-sans select-none">
         {/* 5.1 Área Superior — Chat de Criação (Estilo Lovable) */}
         <div className="flex flex-col items-center text-center max-w-2xl mx-auto w-full pt-4">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-soft-paper border border-warm-mist/80 shadow-xs mb-3">
-            <Wand2 size={13} className="text-purple-600" />
-            <span className="text-[11px] font-medium text-ink tracking-wide">Officia IA Editor</span>
+            <ToolIcon size={13} className={currentTool.accentColor} />
+            <span className="text-[11px] font-medium text-ink tracking-wide">Officia {currentTool.title}</span>
             <span className="w-1.5 h-1.5 rounded-full bg-purple-600 animate-pulse" />
           </div>
 
           <h1 className="text-[28px] sm:text-[34px] font-medium text-ink tracking-tight mb-2">
-            O que você deseja criar ou editar?
+            O que você deseja criar em {currentTool.title}?
           </h1>
           <p className="text-[13px] text-graphite mb-6 max-w-lg leading-relaxed">
-            Converse naturalmente com a IA para desenhar interfaces, compor layouts e transformar ideias em projetos funcionais.
+            {currentTool.subtitle}
           </p>
 
           {/* Campo de Mensagem Amplo e Destacado */}
