@@ -233,16 +233,6 @@ export function App() {
 
         {/* Main Content Workspace */}
         <div className="flex-1 flex flex-col h-full min-w-0 overflow-hidden">
-          {showGlobalHeader && (
-            <Header
-              activeModule={activeModule}
-              selectedModel={selectedModel}
-              onOpenMobileMenu={() => setIsMobileMenuOpen(true)}
-              onOpenContextTransfer={() => setIsTransferModalOpen(true)}
-              onSelectModelClick={() => handleOpenSettings()}
-            />
-          )}
-
           <main className="flex-1 flex flex-col h-full min-w-0 overflow-hidden">
             {renderActiveModule()}
           </main>

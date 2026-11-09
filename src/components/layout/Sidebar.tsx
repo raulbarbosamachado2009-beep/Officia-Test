@@ -129,8 +129,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
       label: 'AUTOMAÇÃO',
       icon: Workflow,
       submodules: [
-        { id: 'flows', label: 'Fluxos', icon: Workflow },
-        { id: 'automations', label: 'Automações', icon: Cpu },
+        { id: 'automations', label: 'Fluxos & Automações', icon: Workflow },
         { id: 'computer-agent', label: 'Agente de Computador', icon: Terminal },
         { id: 'integrations', label: 'Integrações', icon: Network },
       ]
@@ -140,9 +139,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
       label: 'WORKSPACE',
       icon: FolderKanban,
       submodules: [
-        { id: 'projects', label: 'Projetos', icon: FolderKanban },
-        { id: 'files', label: 'Arquivos', icon: Files },
-        { id: 'tasks', label: 'Tarefas', icon: CheckSquare },
+        { id: 'projects', label: 'Projetos & Arquivos', icon: FolderKanban },
         { id: 'history', label: 'Histórico', icon: History },
         { id: 'converter', label: 'Conversor', icon: Repeat },
       ]
@@ -152,7 +149,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
       label: 'INTELIGÊNCIA',
       icon: BrainCircuit,
       submodules: [
-        { id: 'chat-intel', label: 'Chat', icon: MessageSquare },
         { id: 'coordinator', label: 'Coordenador', icon: Bot, badge: 'Orquestrador' },
         { id: 'ai-lab', label: 'Laboratório IA', icon: FlaskConical },
       ]
@@ -201,7 +197,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
       `}>
         {/* Cabeçalho da Sidebar */}
         <div className={`p-3.5 pb-2 flex items-center border-b border-warm-mist/40 ${isCollapsed ? 'justify-center flex-col gap-2' : 'justify-between'}`}>
-          {!isCollapsed && (
+          {!isCollapsed ? (
             <div 
               onClick={() => {
                 onSelectSector('home');
@@ -209,12 +205,23 @@ export const Sidebar: React.FC<SidebarProps> = ({
               }}
               className="flex items-center gap-2 cursor-pointer group min-w-0"
             >
-              <div className="w-7 h-7 rounded-full bg-ink text-parchment flex items-center justify-center font-medium shadow-subtle group-hover:scale-105 transition-transform shrink-0">
-                <Bot size={15} strokeWidth={2.75} />
+              <div className="w-7 h-7 rounded-lg overflow-hidden shrink-0 shadow-xs border border-warm-mist/40">
+                <img src="/logo.jpg" alt="Officia Logo" className="w-full h-full object-cover aspect-square" />
               </div>
               <span className="text-[14px] font-medium tracking-tight text-ink truncate">
                 Officia
               </span>
+            </div>
+          ) : (
+            <div 
+              onClick={() => {
+                onSelectSector('home');
+                onSelectModule('chat', 'home');
+              }}
+              className="w-8 h-8 rounded-lg overflow-hidden shrink-0 cursor-pointer shadow-xs border border-warm-mist/40 hover:scale-105 transition-transform"
+              title="Officia - Início"
+            >
+              <img src="/logo.jpg" alt="Officia Logo" className="w-full h-full object-cover aspect-square" />
             </div>
           )}
 
