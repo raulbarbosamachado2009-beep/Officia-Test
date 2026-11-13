@@ -20,6 +20,9 @@ import {
 import { motion, AnimatePresence } from "framer-motion";
 import { ModelSelector, Model } from "@/components/ui/model-selector";
 import { ThinkingTimeline } from "@/components/ui/thinking-timeline";
+import { Layers, ChevronDown } from "lucide-react";
+import CuisineSelector, { defaultProjectPages } from "@/components/ui/cuisine-selector-chips";
+import { ThoughtChain, ThoughtChainStep, ThoughtChainTrigger, ThoughtChainContent, ThoughtChainItem } from "@/components/ui/components-ai-thought-chain";
 
 const FigmaIcon = (props: React.SVGProps<SVGSVGElement>) => (
   <svg viewBox="0 0 38 57" width="1em" height="1em" fill="none" {...props}>
@@ -148,6 +151,9 @@ export interface AnimatedAIChatProps {
     selectedType?: string;
     onTypeChange?: (val: string) => void;
     showModelSelector?: boolean;
+    showPageSelector?: boolean;
+    selectedPages?: string[];
+    onPageSelectionChange?: (pages: string[]) => void;
     headerSlot?: React.ReactNode;
     children?: React.ReactNode;
 }
@@ -162,6 +168,9 @@ export function AnimatedAIChat({
     selectedType: propSelectedType,
     onTypeChange,
     showModelSelector = true,
+    showPageSelector = false,
+    selectedPages: propSelectedPages,
+    onPageSelectionChange,
     headerSlot,
     children,
 }: AnimatedAIChatProps = {}) {
@@ -176,6 +185,13 @@ export function AnimatedAIChat({
     const [selectedModel, setSelectedModel] = useState<Model>("deepseek-chat");
     const [localType, setLocalType] = useState(typeOptions?.[0]?.value || "");
     const activeType = propSelectedType ?? localType;
+    const [internalPages, setInternalPages] = useState<string[]>(["Home", "Dashboard"]);
+    const [isPageSelectorOpen, setIsPageSelectorOpen] = useState(false);
+    const activePages = propSelectedPages ?? internalPages;
+    const handlePagesChange = (pages: string[]) => {
+      if (!propSelectedPages) setInternalPages(pages);
+      onPageSelectionChange?.(pages);
+    };
 
     // Split Conversation State
     const [conversation, setConversation] = useState<ChatMessage[]>([]);
@@ -731,9 +747,26 @@ export function AnimatedAIChat({
                                 </motion.button>
 
                                 {showModelSelector && (
-                                    <div className="w-48 hidden sm:block">
+                                    <div className="w-44 hidden sm:block">
                                         <ModelSelector value={selectedModel} onChange={setSelectedModel} />
                                     </div>
+                                )}
+
+                                {showPageSelector && (
+                                    <button
+                                        type="button"
+                                        onClick={() => setIsPageSelectorOpen(true)}
+                                        className="h-8 px-2.5 rounded-lg border border-warm-mist/80 dark:border-white/10 bg-white dark:bg-[#18181b] shadow-xs text-xs font-medium text-ink dark:text-white flex items-center gap-1.5 hover:border-graphite/40 transition-colors cursor-pointer shrink-0"
+                                        title="Selecionar páginas do projeto"
+                                    >
+                                        <Layers className="w-3.5 h-3.5 text-deep-teal dark:text-teal-400" />
+                                        <span>
+                                            {activePages.length > 0 
+                                                ? `Páginas (${activePages.length})` 
+                                                : "Selecionar páginas"}
+                                        </span>
+                                        <ChevronDown className="w-3 h-3 opacity-60 ml-0.5" />
+                                    </button>
                                 )}
                             </div>
                             
@@ -794,6 +827,16 @@ export function AnimatedAIChat({
                         stiffness: 150,
                         mass: 0.5,
                     }}
+                />
+            )}
+            {isPageSelectorOpen && (
+                <CuisineSelector
+                    isModal={true}
+                    title="Quais páginas deseja incluir no projeto?"
+                    options={defaultProjectPages}
+                    selected={activePages}
+                    onSelectionChange={handlePagesChange}
+                    onClose={() => setIsPageSelectorOpen(false)}
                 />
             )}
         </div>

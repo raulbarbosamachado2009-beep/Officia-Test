@@ -107,6 +107,15 @@ export interface ChatMessage {
   modelUsed?: string;
   sources?: { title: string; url: string; domain: string }[];
   codeSnippets?: { language: string; code: string }[];
+  thoughtSteps?: {
+    title: string;
+    items: string[];
+    status?: 'done' | 'active' | 'pending';
+  }[];
+  suggestedAction?: {
+    module: ModuleId;
+    label: string;
+  };
 }
 
 export interface StudioPageTemplate {

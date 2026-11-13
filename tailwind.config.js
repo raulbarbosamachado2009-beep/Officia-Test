@@ -16,6 +16,20 @@ export default {
         ink: 'var(--color-ink)',
         'pure-black': 'var(--color-pure-black)',
         'deep-teal': 'var(--color-deep-teal)',
+        popover: {
+          DEFAULT: 'var(--color-popover)',
+          foreground: 'var(--color-popover-foreground)',
+        },
+        background: 'var(--color-background)',
+        muted: {
+          DEFAULT: 'var(--color-muted)',
+          foreground: 'var(--color-muted-foreground)',
+        },
+        accent: {
+          DEFAULT: 'var(--color-accent)',
+          foreground: 'var(--color-accent-foreground)',
+        },
+        input: 'var(--color-input)',
       },
       fontFamily: {
         sans: ['"SF Pro Display"', '"SF Pro Text"', '-apple-system', 'sans-serif'],

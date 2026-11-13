@@ -85,6 +85,15 @@
   --color-pure-black: #000000;
   --color-deep-teal: #016a71;
 
+  --color-popover: #ffffff;
+  --color-popover-foreground: #27251e;
+  --color-background: #faf8f5;
+  --color-muted: #f4f4f5;
+  --color-muted-foreground: #72706b;
+  --color-accent: #f4f4f5;
+  --color-accent-foreground: #27251e;
+  --color-input: #d1d1cd;
+
   /* Typography: Exclusively Apple San Francisco Pro */
   --font-sf-display: 'SF Pro Display', -apple-system, sans-serif;
   --font-sf-text: 'SF Pro Text', -apple-system, sans-serif;
@@ -121,6 +130,16 @@
   --color-ink: #f3f4f6;
   --color-pure-black: #ffffff;
   --color-deep-teal: #14b8a6;
+
+  --color-popover: #1c1c1e;
+  --color-popover-foreground: #f3f4f6;
+  --color-background: #121316;
+  --color-muted: #27272a;
+  --color-muted-foreground: #9ca3af;
+  --color-accent: #27272a;
+  --color-accent-foreground: #f3f4f6;
+  --color-input: #2c2f3b;
+
   --shadow-subtle: 0px 1px 3px 0px rgba(0, 0, 0, 0.4);
 }
 
@@ -163,4 +182,3 @@ body {
   max-height: 100vh;
   box-sizing: border-box;
 }
-

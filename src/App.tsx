@@ -210,7 +210,7 @@ export function App() {
   };
 
   // Chat, Studio e Settings não precisam do header genérico
-  const showGlobalHeader = !['chat', 'chat-intel', 'studio', 'settings', 'ai-editor', 'video-editor', 'photo-editor', 'motion-design'].includes(activeModule);
+  const showGlobalHeader = !['chat', 'chat-intel', 'studio', 'settings', 'ai-editor', 'video-editor', 'photo-editor', 'motion-design', 'communication'].includes(activeModule);
 
   return (
     <ThemeProvider>

@@ -33,10 +33,10 @@ export function ModelSelector({
 }: ModelSelectorProps) {
 	return (
 		<Select value={value} onValueChange={onChange} {...props}>
-			<SelectTrigger className="w-full nodrag">
-				<SelectValue placeholder="Select model" />
+			<SelectTrigger className="w-full nodrag bg-white dark:bg-[#18181b] border border-warm-mist/80 dark:border-white/10 shadow-xs h-8 text-xs font-medium rounded-lg text-ink dark:text-white px-2.5 hover:border-graphite/40 transition-colors">
+				<SelectValue placeholder="Selecionar modelo" />
 			</SelectTrigger>
-			<SelectContent>
+			<SelectContent className="bg-white dark:bg-[#18181b] border border-warm-mist dark:border-white/15 shadow-2xl rounded-xl z-[9999] min-w-[240px] p-1">
 				{MODELS.map((model) => {
 					const Icon = ModelIcons[model];
 					return (
@@ -44,9 +44,10 @@ export function ModelSelector({
 							key={model}
 							value={model}
 							disabled={disabledModels?.includes(model)}
+							className="rounded-lg py-2 pl-8 pr-3 text-xs font-mono cursor-pointer hover:bg-neutral-100 dark:hover:bg-white/10"
 						>
 							<div className="flex items-center gap-2">
-								{Icon && <Icon className="h-4 w-4" />}
+								{Icon && <Icon className="h-4 w-4 shrink-0" />}
 								<span>{model}</span>
 							</div>
 						</SelectItem>

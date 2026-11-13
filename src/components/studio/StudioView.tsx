@@ -1,8 +1,10 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { AnimatedAIChat, CommandSuggestion } from '../ui/animated-ai-chat';
 import { Code2, Sparkles, Layout, Smartphone } from 'lucide-react';
 
 export const StudioView: React.FC = () => {
+  const [selectedPages, setSelectedPages] = useState<string[]>(["Home", "Dashboard"]);
+
   const suggestions: CommandSuggestion[] = [
     {
       icon: <Layout className="w-4 h-4" />,
@@ -37,6 +39,9 @@ export const StudioView: React.FC = () => {
         subtitle="Desenvolva aplicações, telas e protótipos completos assistidos por IA generativa."
         placeholder="Descreva o sistema ou interface que deseja conceber no AI Studio..."
         suggestions={suggestions}
+        showPageSelector={true}
+        selectedPages={selectedPages}
+        onPageSelectionChange={setSelectedPages}
       />
     </div>
   );
